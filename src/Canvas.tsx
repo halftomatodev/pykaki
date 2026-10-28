@@ -7,6 +7,7 @@ import { useStore } from './store';
 import { BoxView, GroupFrame } from './BoxView';
 import * as ops from './ops';
 import { addBoxAt, editBox } from './actions';
+import { isTyping } from './util';
 
 const nodeTypes = { box: BoxView, frame: GroupFrame };
 const FRAME_PAD = 22;
@@ -163,7 +164,8 @@ export function Canvas() {
           else useStore.getState().say('jump ↔ call 전환은 "다음으로" 선과 call 선에서만 돼요');
         }}
         onNodeDoubleClick={(e, n) => {
-          if (n.type !== 'box') return;
+          // 편집 중인 칸 안의 더블클릭(단어 선택)은 그대로 둔다
+          if (n.type !== 'box' || isTyping(e.target)) return;
           const part = (e.target as HTMLElement).closest('[data-part]')?.getAttribute('data-part') ?? null;
           editBox(n.id, part);
         }}
@@ -172,6 +174,7 @@ export function Canvas() {
           const g = (n.data as any).groupId;
           useStore.getState().select(useStore.getState().project.nodes.filter((b) => b.group === g).map((b) => b.id));
         }}
+        onPaneClick={() => useStore.setState({ inlineEdit: null })}
         zoomOnDoubleClick={false}
         deleteKeyCode={['Delete']}
         multiSelectionKeyCode={['Control', 'Meta', 'Shift']}

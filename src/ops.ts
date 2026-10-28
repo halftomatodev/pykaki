@@ -1,5 +1,5 @@
 // 프로젝트를 고치는 함수들. 모두 store.update() 안에서 복사본(draft)에 대해 호출한다.
-import type { BoxNode, Choice, ExitType, Project } from './types';
+import type { BoxNode, Choice, ExitType, Line, Project } from './types';
 import { PALETTE, uid } from './util';
 
 export type LinkKind = 'next' | 'choice' | 'call' | 'then';
@@ -36,7 +36,21 @@ export function setLink(b: BoxNode, handle: string, target: string | null) {
   }
 }
 
-export const findBox = (p: Project, id: string) => p.nodes.find((n) => n.id === id);
+// 화자 선택 칸의 값: 'narration' | 'say:캐릭터id' | 'command' | 'note'
+export const speakerValue = (l: Line) => (l.type === 'say' ? 'say:' + (l.who ?? '') : l.type);
+
+export function setSpeaker(l: Line, v: string) {
+  if (v.startsWith('say:')) {
+    l.type = 'say';
+    l.who = v.slice(4);
+  } else {
+    l.type = v as Line['type'];
+    delete l.who;
+    delete l.attr;
+  }
+}
+
+export const findBox =(p: Project, id: string) => p.nodes.find((n) => n.id === id);
 
 export function connect(p: Project, src: string, handle: string | null | undefined, target: string | null) {
   const b = findBox(p, src);

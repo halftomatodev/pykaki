@@ -1,4 +1,5 @@
 // 툴바와 단축키가 함께 쓰는 동작
+import { flushSync } from 'react-dom';
 import type { ReactFlowInstance } from '@xyflow/react';
 import { useStore } from './store';
 import { layoutAll, layoutSubset } from './layout';
@@ -57,7 +58,26 @@ export function addBoxAt(pos: { x: number; y: number }, group?: string | null) {
   return id;
 }
 
-// 상자 더블클릭: 편집 탭을 열고 누른 곳(제목/대사 줄/선택지)의 입력칸으로 커서를 옮긴다
+function focusNow(elId: string) {
+  const el = document.getElementById(elId) as HTMLInputElement | HTMLTextAreaElement | null;
+  if (!el) return false;
+  el.focus();
+  el.setSelectionRange(el.value.length, el.value.length);
+  return true;
+}
+
+// 입력칸이 화면에 생긴 뒤 커서를 끝으로 옮긴다
+export function focusField(elId: string) {
+  setTimeout(() => focusNow(elId), 60);
+}
+
+// 새 칸을 만드는 변경을 바로 화면에 그리고 곧장 커서를 옮긴다 (빨리 이어 쳐도 글자가 앞 칸에 들어가지 않게)
+export function changeThenFocus(change: () => void, elId: string) {
+  flushSync(change);
+  if (!focusNow(elId)) focusField(elId);
+}
+
+// 상자 더블클릭: 상자 안에서 바로 편집. 누른 곳(제목/대사 줄/선택지)의 입력칸으로 커서를 옮긴다
 export function editBox(boxId: string, part: string | null) {
   const s = useStore.getState();
   const b = ops.findBox(s.project, boxId);
@@ -71,14 +91,8 @@ export function editBox(boxId: string, part: string | null) {
     } else target = b.lines[b.lines.length - 1].id;
   }
   s.select([boxId]);
-  useStore.setState({ tab: 'edit' });
-  setTimeout(() => {
-    const el = document.getElementById('ed-' + target) as HTMLInputElement | HTMLTextAreaElement | null;
-    if (!el) return;
-    el.focus();
-    el.setSelectionRange(el.value.length, el.value.length);
-    el.scrollIntoView({ block: 'nearest' });
-  }, 60);
+  useStore.setState({ inlineEdit: boxId });
+  focusField(target === 'title' ? 'in-title-' + boxId : 'in-' + target);
 }
 
 export function addBoxCenter(rf: ReactFlowInstance<any, any>) {

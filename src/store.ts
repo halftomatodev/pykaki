@@ -16,6 +16,7 @@ interface S {
   flash: string | null;
   selectedIds: string[];
   focusLineId: string | null;
+  inlineEdit: string | null; // 상자 안에서 바로 편집 중인 상자 id
   tab: Tab;
   playing: boolean;
   playStart: string | null;
@@ -48,6 +49,7 @@ export const useStore = create<S>((set, get) => ({
   flash: null,
   selectedIds: [],
   focusLineId: null,
+  inlineEdit: null,
   tab: 'edit',
   playing: false,
   playStart: null,
@@ -82,6 +84,7 @@ export const useStore = create<S>((set, get) => ({
       dirty: o.dirty ?? false,
       fileName: o.fileName === undefined ? get().fileName : o.fileName,
       selectedIds: [],
+      inlineEdit: null,
       playing: false,
       play: null,
       focusReq: { ids: p.nodes.map((n) => n.id), t: Date.now() },
@@ -102,7 +105,8 @@ export const useStore = create<S>((set, get) => ({
   select: (ids) => {
     const cur = get().selectedIds;
     if (cur.length === ids.length && ids.every((x) => cur.includes(x))) return;
-    set({ selectedIds: ids });
+    const ie = get().inlineEdit;
+    set({ selectedIds: ids, inlineEdit: ie && ids.includes(ie) ? ie : null });
   },
 
   focusNodes: (ids) => set({ focusReq: { ids, t: Date.now() } }),
