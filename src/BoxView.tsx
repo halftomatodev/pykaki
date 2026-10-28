@@ -5,6 +5,8 @@ import * as ops from './ops';
 import type { BoxNode, Line } from './types';
 import { hexAlpha, uid } from './util';
 import { changeThenFocus } from './actions';
+import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { isStage, stageCode } from './stage';
 
 export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const project = useStore((s) => s.project);
@@ -106,7 +108,6 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
 
 // 상자 안에서 바로 쓰는 대사 목록
 function InlineLines({ b }: { b: BoxNode }) {
-  const chars = useStore((s) => s.project.characters);
   const update = useStore((s) => s.update);
   const upd = (fn: (x: BoxNode) => void, key?: string) => update((p) => fn(ops.findBox(p, b.id)!), key);
 
@@ -123,47 +124,56 @@ function InlineLines({ b }: { b: BoxNode }) {
     }
   };
 
+  const drag = useLineDrag((from, to) => upd((x) => ops.moveLine(x, from, to)));
+
   return (
     <div className="box-lines il-lines">
       {b.lines.map((l, i) => (
-        <div className={'il t-' + l.type} key={l.id}>
+        <div className={'il t-' + l.type + (isStage(l.type) ? ' t-stage' : '') + drag.cls(i)} key={l.id} {...drag.row(i)}>
           <div className="il-top">
-            <select className="nodrag" value={ops.speakerValue(l)} onChange={(e) => upd((x) => ops.setSpeaker(x.lines[i], e.target.value))}>
-              <option value="narration">내레이션</option>
-              {chars.map((c) => (
-                <option key={c.id} value={'say:' + c.id}>{c.name}</option>
-              ))}
-              {l.type === 'say' && !chars.some((c) => c.id === l.who) && <option value={ops.speakerValue(l)}>? {l.who}</option>}
-              <option value="command">⚙ 명령</option>
-              <option value="note"># 메모</option>
-            </select>
+            <span className="nodrag grip" {...drag.grip(i)}>⠿</span>
+            <SpeakerSelect className="nodrag" l={l} set={(fn) => upd((x) => fn(x.lines[i]))} />
             {l.type === 'say' && (
               <input className="nodrag il-attr" placeholder="속성" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />
             )}
             <span className="sp" />
             <button className="nodrag" title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
           </div>
-          <textarea
-            id={'in-' + l.id}
-            className="nodrag nowheel"
-            rows={1}
-            value={l.text}
-            placeholder={l.type === 'command' ? 'show / scene / play …' : l.type === 'note' ? '메모' : '대사'}
-            onKeyDown={(e) => onKey(e, i, l)}
-            onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)}
-          />
+          {isStage(l.type) ? (
+            <StageFields l={l} nd="nodrag" firstId={'in-' + l.id} set={(fn, key) => upd((x) => fn(x.lines[i]), key)} />
+          ) : (
+            <textarea
+              id={'in-' + l.id}
+              className="nodrag nowheel"
+              rows={1}
+              value={l.text}
+              placeholder={l.type === 'command' ? 'show / scene / play …' : l.type === 'note' ? '메모' : '대사'}
+              onKeyDown={(e) => onKey(e, i, l)}
+              onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)}
+            />
+          )}
         </div>
       ))}
       <div className="il-foot">
         <button className="nodrag il-add" onClick={() => addAfter(b.lines.length - 1, b.lines[b.lines.length - 1])}>+ 줄</button>
-        <span className="tip">Ctrl+Enter 새 줄 · Esc 완료</span>
+        <span className="tip">Ctrl+Enter 새 줄 · ⠿ 끌어서 순서 · Esc 완료</span>
       </div>
     </div>
   );
 }
 
+const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: '🙈', music: '🎵', sound: '🔊' };
+
 function LinePreview({ l }: { l: Line }) {
   const ch = useStore((s) => (l.type === 'say' ? s.project.characters.find((c) => c.id === l.who) : undefined));
+  if (isStage(l.type)) {
+    const { code, problem } = stageCode(l);
+    return (
+      <div className="pl cmd pl-stage" data-part={l.id}>
+        {STAGE_ICON[l.type]} {code ? <code>{code}</code> : <i className="todo">({problem})</i>}
+      </div>
+    );
+  }
   if (l.type === 'command')
     return (
       <div className="pl cmd" data-part={l.id}>

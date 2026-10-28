@@ -3,6 +3,8 @@ import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, ExitType, Line, Project } from './types';
 import { uid } from './util';
+import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { isStage } from './stage';
 
 type Upd = (fn: (b: BoxNode, p: Project) => void, key?: string) => void;
 
@@ -69,6 +71,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
   const update = useStore((s) => s.update);
   const upd: Upd = (fn, key) => update((p) => fn(ops.findBox(p, b.id)!, p), key);
   const g = project.labels.find((l) => l.id === b.group);
+  const drag = useLineDrag((from, to) => upd((x) => ops.moveLine(x, from, to)));
 
   const addLine = () => {
     const last = b.lines[b.lines.length - 1];
@@ -107,7 +110,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
 
       <h4>대사</h4>
       {b.lines.map((l, i) => (
-        <LineRow key={l.id} b={b} l={l} i={i} upd={upd} />
+        <LineRow key={l.id} b={b} l={l} i={i} upd={upd} drag={drag} />
       ))}
       <div className="row">
         <button onClick={addLine}>+ 줄 추가</button>
@@ -120,8 +123,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
   );
 }
 
-function LineRow({ b, l, i, upd }: { b: BoxNode; l: Line; i: number; upd: Upd }) {
-  const chars = useStore((s) => s.project.characters);
+function LineRow({ b, l, i, upd, drag }: { b: BoxNode; l: Line; i: number; upd: Upd; drag: ReturnType<typeof useLineDrag> }) {
   const focusLineId = useStore((s) => s.focusLineId);
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -132,49 +134,34 @@ function LineRow({ b, l, i, upd }: { b: BoxNode; l: Line; i: number; upd: Upd })
     useStore.setState({ focusLineId: null });
   }, [focusLineId, l.id]);
 
-  const val = l.type === 'say' ? 'say:' + (l.who ?? '') : l.type;
-  const setSpeaker = (v: string) =>
-    upd((x) => {
-      const t = x.lines[i];
-      if (v.startsWith('say:')) {
-        t.type = 'say';
-        t.who = v.slice(4);
-      } else {
-        t.type = v as Line['type'];
-        delete t.who;
-        delete t.attr;
-      }
-    });
+  const set = (fn: (x: Line) => void, key?: string) => upd((x) => fn(x.lines[i]), key);
 
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    const nl: Line = { id: uid('l'), type: l.type === 'command' || l.type === 'note' ? 'narration' : l.type, who: l.who, text: '' };
+    const nl: Line = { id: uid('l'), type: l.type === 'say' ? 'say' : 'narration', who: l.type === 'say' ? l.who : undefined, text: '' };
     upd((x) => void x.lines.splice(i + 1, 0, nl));
     useStore.setState({ focusLineId: nl.id });
   };
 
-  const placeholder = { narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' }[l.type];
+  const placeholder = ({ narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' } as Record<string, string>)[l.type];
 
   return (
-    <div className={'line t-' + l.type}>
+    <div className={'line t-' + l.type + (isStage(l.type) ? ' t-stage' : '') + drag.cls(i)} {...drag.row(i)}>
       <div className="line-top">
-        <select value={val} onChange={(e) => setSpeaker(e.target.value)}>
-          <option value="narration">내레이션</option>
-          {chars.map((c) => (
-            <option key={c.id} value={'say:' + c.id}>{c.name} ({c.id})</option>
-          ))}
-          {l.type === 'say' && !chars.some((c) => c.id === l.who) && <option value={val}>? {l.who}</option>}
-          <option value="command">⚙ 명령</option>
-          <option value="note"># 메모</option>
-        </select>
+        <span className="grip" {...drag.grip(i)}>⠿</span>
+        <SpeakerSelect l={l} set={set} long />
         {l.type === 'say' && <input className="attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />}
         <span className="sp" />
-        <button title="위로" disabled={i === 0} onClick={() => upd((x) => void x.lines.splice(i - 1, 0, ...x.lines.splice(i, 1)))}>↑</button>
-        <button title="아래로" disabled={i === b.lines.length - 1} onClick={() => upd((x) => void x.lines.splice(i + 1, 0, ...x.lines.splice(i, 1)))}>↓</button>
+        <button title="위로" disabled={i === 0} onClick={() => upd((x) => ops.moveLine(x, i, i - 1))}>↑</button>
+        <button title="아래로" disabled={i === b.lines.length - 1} onClick={() => upd((x) => ops.moveLine(x, i, i + 2))}>↓</button>
         <button title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
       </div>
-      <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
+      {isStage(l.type) ? (
+        <StageFields l={l} set={set} />
+      ) : (
+        <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
+      )}
     </div>
   );
 }

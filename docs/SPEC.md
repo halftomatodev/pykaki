@@ -54,7 +54,9 @@
     "lines": [
       { "id": "l1", "type": "narration", "text": "비가 내렸다." },
       { "id": "l2", "type": "say", "who": "a", "attr": "smile", "text": "우산 있어?" },
-      { "id": "l3", "type": "command", "text": "show alice smile" },
+      { "id": "l3", "type": "show", "text": "", "kind": "char", "who": "a", "attr": "smile", "at": "left", "trans": "dissolve" },
+      { "id": "l5", "type": "music", "text": "", "file": "rain.ogg" },
+      { "id": "l6", "type": "command", "text": "with vpunch" },
       { "id": "l4", "type": "note", "text": "작가 메모" }
     ],
     "exit": { "type": "next", "target": "n2" }
@@ -64,7 +66,13 @@
 
 - **상자(node)**: 대사 묶음 하나. 반드시 label 그룹 하나(`group`)에 속한다.
 - **label 그룹**: 렌파이 `label` 하나. 상자 여러 개를 묶는다. `entry`가 그 label의 첫 상자다.
-- **줄(line) 종류**: `narration`(내레이션), `say`(캐릭터 대사, `who`=캐릭터 id, `attr`=표정 등), `command`(렌파이 명령 그대로), `note`(주석).
+- **줄(line) 종류**: `narration`(내레이션), `say`(캐릭터 대사, `who`=캐릭터 id, `attr`=표정 등), 연출 줄 5가지, `command`(렌파이 명령 그대로), `note`(주석).
+- **연출 줄** (`src/stage.ts`): 명령을 직접 쓰지 않고 칸을 채운다. `text`는 쓰지 않는다.
+  - `scene` `{ image, trans }`: 배경 이름(`bg` 뒤), 전환
+  - `show` `{ kind, who, attr, image, at, trans }`: `kind`는 `char`(who+attr) | `bg`(image) | `etc`(image), 위치 `left`/`right`(비우면 가운데)
+  - `hide` `{ kind, who, image, trans }`
+  - `music` `{ file, stop }`, `sound` `{ file }`
+  - `trans`는 `dissolve` | `fade` | 비움. 모두 선택 칸이라 예전 파일은 그대로 열린다.
 - **나가는 방식(exit)**:
   - `next` `{ target }`: 다음 상자로
   - `menu` `{ choices: [{ id, text, target, mode:"jump", condition:null, actions:[] }] }`: 선택지
@@ -76,7 +84,7 @@
 
 ## 5. `.rpy` 내보내기 규칙 (`src/exportRpy.ts`)
 
-1. 머리말 주석과 `define 캐릭터id = Character("이름", color="#...")`.
+1. 머리말 주석과 `define 캐릭터id = Character("이름", color="#...", image="캐릭터id")`. `image`가 있어야 대사 속성(`a smile "..."`)과 `show a smile`이 같은 그림을 쓴다.
 2. 시작: `label start:` → `jump 시작상자`. 단, 이름이 `start`인 label이 있으면 그 label의 첫 상자가 시작 상자여야 하고, 감싸는 label을 만들지 않는다.
 3. **label 그룹마다 `label 이름:` 하나.** 그룹 안 상자 순서는 다음과 같다.
    - 첫 상자(`entry`)부터 시작해서, `next`나 call의 `then`으로 이어지는 같은 그룹 상자를 바로 뒤에 붙인다.
@@ -87,6 +95,7 @@
    - 내레이션: `"텍스트"`
    - 대사: `id 속성 "텍스트"`
    - 명령: 여러 줄을 그대로 출력(끝 공백만 제거)
+   - 연출: `scene bg 이름 [with 전환]`(이름이 비면 `scene`), `show 이미지 [at 위치] [with 전환]`, `hide 태그 [with 전환]`, `play music "audio/파일"`, `stop music fadeout 1.0`, `play sound "audio/파일"`. 이미지는 배경 `bg 이름`, 캐릭터 `캐릭터id 표정`, 기타 이름 그대로. 파일 이름에 `/`가 있으면 앞에 `audio/`를 붙이지 않는다. 칸이 덜 채워지면 `# TODO: 이유`를 쓰고 경고한다.
    - 메모: `# ...`
 7. 텍스트 이스케이프: `\`→`\\`, `"`→`\"`. 설정에 따라 `[`→`[[`, `{`→`{{`(텍스트 태그 끔), `%`→`%%`. 줄바꿈은 `\n`.
 8. 나가는 방식 출력:
@@ -99,6 +108,7 @@
     - 시작 상자 없음
     - 등록되지 않은 화자
     - 빈 대사나 빈 선택지
+    - 덜 채운 연출 줄, 등록되지 않은 캐릭터, 영문이 아닌 이미지 이름
     - 연결 안 된 선
     - 시작에서 도달할 수 없는 상자
     - call 대상에서 return에 도달하지 않음
@@ -116,7 +126,7 @@
 - 상태: 현재 상자, 줄 위치, call 스택(`{from, to}`), 선택지, 표시 중인 줄, 명령 뱃지, 종료 사유, 방문한 상자와 선.
 - `advance()`는 다음 표시할 줄까지 진행한다.
   - 메모는 건너뛴다.
-  - 명령은 뱃지로만 쌓는다.
+  - 명령과 연출 줄은 뱃지로만 쌓는다(연출 줄은 내보낼 명령으로 표시).
   - 나가는 방식은 jump, menu, call, return 규칙대로 따라간다.
   - 무한 반복은 5000단계에서 멈춘다.
 - 종료 사유: `end`(return), `broken`(연결 없음), `missing`(없는 상자), `loop`.
@@ -131,6 +141,7 @@
   - 끝내는 방법: Esc, [완료], 빈 곳 클릭, 다른 상자 선택.
   - 입력칸 안의 더블클릭은 무시한다(단어 선택).
 - **상자 한 번 클릭**: 오른쪽 편집 탭에서 label, 다음 흐름, 시작 상자 등을 설정한다.
+- **줄 순서**: 줄 왼쪽 ⠿ 손잡이를 끌어 다른 줄의 위/아래 절반에 놓는다(HTML 드래그 앤 드롭, `useLineDrag`). 상자 안 편집과 편집 탭 모두. 편집 탭에는 ↑↓ 버튼도 있다.
 - **Ctrl+Enter**: 같은 화자로 새 줄을 만든다. `flushSync`로 즉시 그려서 바로 이어 쳐도 글자가 새 줄에 들어간다.
 - **빈 곳 더블클릭**: 새 상자를 만든다. label 프레임 안이면 그 label에 넣는다.
 - **선을 빈 곳에 놓기**: 새 상자를 만들어 연결한다. 상자 몸통에 놓으면 그 상자에 연결한다.
@@ -163,6 +174,8 @@
 | `src/persist.ts` | IndexedDB |
 | `src/files.ts` | 파일 열기/저장/`.rpy` 내보내기 |
 | `src/exportRpy.ts` | `.rpy` 변환과 검사 |
+| `src/stage.ts` | 연출 줄 → 렌파이 명령 |
+| `src/LineFields.tsx` | 줄 종류 선택, 연출 줄 입력칸, 줄 끌어 옮기기 |
 | `src/layout.ts` | 자동 정렬 |
 | `src/playEngine.ts` | 플레이 엔진 (Windows는 대소문자를 구분하지 않아서 `Player.tsx`와 이름을 다르게 함) |
 | `src/actions.ts` | 정렬 실행, 상자 추가, 상자 더블클릭 편집, 포커스 |

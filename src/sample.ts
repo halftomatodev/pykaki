@@ -44,7 +44,8 @@ export function createSample(): Project {
     {
       id: 'n1', group: 'g1', title: '도입', pos: { x: 0, y: 0 },
       lines: [
-        { id: 'l1', type: 'command', text: 'scene bg street rain' },
+        { id: 'l1', type: 'scene', text: '', image: 'street rain', trans: 'fade' },
+        { id: 'l11', type: 'music', text: '', file: 'rain.ogg' },
         { id: 'l2', type: 'narration', text: '비가 내리고 있었다.' },
         { id: 'l3', type: 'say', who: 'a', attr: 'smile', text: '우산 있어?' },
       ],

@@ -87,6 +87,7 @@ input[type='color'] { width: 24px; height: 24px; padding: 0; border: 1px solid v
 .il { border-radius: 6px; padding: 3px; margin-bottom: 4px; background: #fff; border: 1px solid var(--line); }
 .il.t-command { background: #eef2ff; }
 .il.t-note { background: #fffbeb; }
+.il.t-stage { background: #f0fdf4; }
 .il-top { display: flex; gap: 3px; align-items: center; margin-bottom: 2px; }
 .il-top select, .il-top input, .il-top button { font-size: 11px; padding: 1px 4px; }
 .il-top .sp { flex: 1; }
@@ -145,6 +146,25 @@ input.title { width: 100%; font-weight: 700; font-size: 15px; margin-bottom: 8px
 .line { border: 1px solid var(--line); border-radius: 8px; padding: 6px; margin-bottom: 6px; background: #fafbfc; }
 .line.t-command { background: #eef2ff; }
 .line.t-note { background: #fffbeb; }
+.line.t-stage { background: #f0fdf4; }
+
+/* 연출 줄 입력칸 */
+.sf-row { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.sf-row select { max-width: 120px; }
+.sf-in { flex: 1; min-width: 70px; }
+.sf-in.short { flex: 0 1 90px; }
+.sf-in.wide { flex: 1 1 140px; }
+.sf-code { display: block; margin-top: 3px; font-size: 11px; color: #166534; }
+.sf-code.todo { color: #b91c1c; font-family: inherit; }
+.il .sf-row select, .il .sf-row input { font-size: 11px; padding: 1px 4px; }
+.pl.pl-stage code { background: #dcfce7; color: #166534; }
+
+/* 줄 끌어서 순서 바꾸기 */
+.grip { cursor: grab; color: #9ca3af; padding: 0 2px; user-select: none; font-size: 13px; line-height: 1; }
+.grip:hover { color: var(--accent); }
+.dragging { opacity: 0.4; }
+.drop-before { box-shadow: 0 -3px 0 var(--accent); }
+.drop-after { box-shadow: 0 3px 0 var(--accent); }
 .line.t-command textarea { font-family: Consolas, monospace; }
 .line-top { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
 .line-top .attr { width: 96px; }

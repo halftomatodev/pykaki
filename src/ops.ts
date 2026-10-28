@@ -36,18 +36,28 @@ export function setLink(b: BoxNode, handle: string, target: string | null) {
   }
 }
 
-// 화자 선택 칸의 값: 'narration' | 'say:캐릭터id' | 'command' | 'note'
+// 화자 선택 칸의 값: 'narration' | 'say:캐릭터id' | 연출 종류 | 'command' | 'note'
 export const speakerValue = (l: Line) => (l.type === 'say' ? 'say:' + (l.who ?? '') : l.type);
 
 export function setSpeaker(l: Line, v: string) {
   if (v.startsWith('say:')) {
     l.type = 'say';
     l.who = v.slice(4);
-  } else {
-    l.type = v as Line['type'];
+    return;
+  }
+  l.type = v as Line['type'];
+  // 캐릭터 show/hide는 화자와 표정을 이어받는다
+  if (v === 'show' || v === 'hide') l.kind ??= 'char';
+  else {
     delete l.who;
     delete l.attr;
   }
+}
+
+// 줄을 from 자리에서 빼서 to 자리(빼기 전 기준, 그 줄 앞)에 넣는다
+export function moveLine(b: BoxNode, from: number, to: number) {
+  const [l] = b.lines.splice(from, 1);
+  b.lines.splice(to > from ? to - 1 : to, 0, l);
 }
 
 export const findBox =(p: Project, id: string) => p.nodes.find((n) => n.id === id);

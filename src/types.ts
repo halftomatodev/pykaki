@@ -1,13 +1,22 @@
 // 프로젝트 저장 파일(JSON)의 구조. 설계 문서 5장 참고.
 
-export type LineType = 'narration' | 'say' | 'command' | 'note';
+// scene/show/hide/music/sound는 렌파이 명령을 몰라도 칸만 채우면 되는 연출 줄
+export type LineType = 'narration' | 'say' | 'scene' | 'show' | 'hide' | 'music' | 'sound' | 'command' | 'note';
+
+export type ImageKind = 'char' | 'bg' | 'etc';
 
 export interface Line {
   id: string;
   type: LineType;
-  who?: string; // say일 때 캐릭터 id
-  attr?: string; // say일 때 이미지 속성(표정 등)
-  text: string;
+  who?: string; // say, 캐릭터 show/hide일 때 캐릭터 id
+  attr?: string; // say, 캐릭터 show일 때 이미지 속성(표정 등)
+  text: string; // 연출 줄에서는 쓰지 않는다
+  kind?: ImageKind; // show/hide: 이미지 종류
+  image?: string; // scene/배경: bg 뒤 이름, 기타: 이미지 이름
+  at?: string; // show: left | right (비우면 가운데)
+  trans?: string; // scene/show/hide: dissolve | fade (비우면 바로)
+  file?: string; // music/sound: 파일 이름
+  stop?: boolean; // music: 멈추기
 }
 
 export interface Choice {

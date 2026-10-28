@@ -2,6 +2,7 @@
 import type { BoxNode, LabelGroup, Line, Project, Settings } from './types';
 import { exitLinks, fallTarget } from './ops';
 import { IDENT, RESERVED } from './util';
+import { badImageName, isStage, stageCode } from './stage';
 
 export interface Warn { level: 'error' | 'warn'; msg: string; nodeId?: string }
 
@@ -95,7 +96,7 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
   out.push(`# ${p.project.title}`);
   out.push("# PyKaki가 만든 파일이에요. 직접 고치면 다음 내보내기 때 덮어써져요.");
   out.push('');
-  for (const c of p.characters) out.push(`define ${c.id} = Character(${pyStr(c.name)}${c.color ? `, color=${pyStr(c.color)}` : ''})`);
+  for (const c of p.characters) out.push(`define ${c.id} = Character(${pyStr(c.name)}${c.color ? `, color=${pyStr(c.color)}` : ''}, image=${pyStr(c.id)})`);
   if (p.characters.length) out.push('');
 
   // 시작
@@ -131,6 +132,14 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
       const lineOut = (l: Line) => {
         if (l.type === 'note') return l.text.split('\n').forEach((x) => body.push('# ' + x));
         if (l.type === 'command') return l.text.split('\n').forEach((x) => x.trim() && body.push(x.trimEnd()));
+        if (isStage(l.type)) {
+          const { code, problem } = stageCode(l);
+          if (problem) W.push({ level: 'warn', msg: `${problem} (${b.title || b.id})`, nodeId: b.id });
+          if (badImageName(l)) W.push({ level: 'warn', msg: `이미지 이름은 영문·숫자·_·-로 쓰는 게 안전해요 (${b.title || b.id})`, nodeId: b.id });
+          if (l.who && (l.kind ?? 'char') === 'char' && l.type !== 'scene' && !charById.has(l.who))
+            W.push({ level: 'error', msg: `등록되지 않은 캐릭터 "${l.who}" (${b.title || b.id})`, nodeId: b.id });
+          return body.push(code ?? `# TODO: ${problem}`);
+        }
         if (!l.text.trim()) W.push({ level: 'warn', msg: `빈 대사가 있어요 (${b.title || b.id})`, nodeId: b.id });
         if (l.type === 'narration') return body.push(q(l.text));
         const c = l.who ? charById.get(l.who) : undefined;
