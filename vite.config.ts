@@ -8,6 +8,6 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 export default defineConfig({
   base: './',
   // Dropbox 폴더 안에 캐시를 두면 동기화가 파일을 잠가서 개발 서버가 멈춘다
-  cacheDir: join(tmpdir(), 'renpy-flow-editor-vite'),
+  cacheDir: join(tmpdir(), 'pykaki-vite'),
   plugins: [react(), viteSingleFile()],
 });

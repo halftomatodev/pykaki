@@ -25,7 +25,7 @@ export function Toolbar() {
 
   return (
     <div className="toolbar">
-      <span className="brand">Ren'Py Flow</span>
+      <span className="brand">PyKaki</span>
       <button onClick={newProject}>새로</button>
       <button onClick={openProject}>열기</button>
       <button onClick={() => saveProject()} title="Ctrl+S">저장</button>

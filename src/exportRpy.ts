@@ -93,7 +93,7 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
 
   // 머리말과 캐릭터
   out.push(`# ${p.project.title}`);
-  out.push("# Ren'Py Flow Editor가 만든 파일이에요. 직접 고치면 다음 내보내기 때 덮어써져요.");
+  out.push("# PyKaki가 만든 파일이에요. 직접 고치면 다음 내보내기 때 덮어써져요.");
   out.push('');
   for (const c of p.characters) out.push(`define ${c.id} = Character(${pyStr(c.name)}${c.color ? `, color=${pyStr(c.color)}` : ''})`);
   if (p.characters.length) out.push('');

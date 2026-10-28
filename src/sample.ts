@@ -87,7 +87,7 @@ export function createSample(): Project {
 
 // 불러온 JSON의 빠진 값을 채운다
 export function normalizeProject(raw: any): Project {
-  if (!raw || raw.format !== 'renpy-flow' || !Array.isArray(raw.nodes)) throw new Error('Ren\'Py Flow 프로젝트 파일이 아니에요.');
+  if (!raw || raw.format !== 'renpy-flow' || !Array.isArray(raw.nodes)) throw new Error('PyKaki 프로젝트 파일이 아니에요.');
   const d = defaults();
   const p: Project = {
     ...d,

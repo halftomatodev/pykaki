@@ -36,7 +36,7 @@ export async function saveProject(as = false) {
       if (!jsonHandle || as)
         jsonHandle = await w.showSaveFilePicker({
           suggestedName: name,
-          types: [{ description: "Ren'Py Flow 프로젝트", accept: { 'application/json': ['.json'] } }],
+          types: [{ description: "PyKaki 프로젝트", accept: { 'application/json': ['.json'] } }],
         });
       await writeTo(jsonHandle, text);
       useStore.setState({ dirty: false, fileName: jsonHandle.name });
@@ -69,7 +69,7 @@ export async function openProject() {
   let handle: any = null;
   try {
     if (typeof w.showOpenFilePicker === 'function') {
-      [handle] = await w.showOpenFilePicker({ types: [{ description: "Ren'Py Flow 프로젝트", accept: { 'application/json': ['.json'] } }] });
+      [handle] = await w.showOpenFilePicker({ types: [{ description: "PyKaki 프로젝트", accept: { 'application/json': ['.json'] } }] });
       file = await handle.getFile();
     } else file = await pickFileFallback();
   } catch (e: any) {

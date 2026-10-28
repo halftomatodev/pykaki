@@ -1,6 +1,9 @@
-# Ren'Py Flow Editor
+# PyKaki
 
-상자와 선으로 렌파이 대본을 쓰고 `.rpy`로 내보내는 도구. 설계는 `../RENPY_FLOW_EDITOR_SPEC.md` 참고.
+상자와 선으로 렌파이 대본을 쓰고 `.rpy`로 내보내는 도구.
+
+- 사용 가이드: [docs/GUIDE.md](docs/GUIDE.md)
+- 개발 명세: [docs/SPEC.md](docs/SPEC.md)
 
 ## 그냥 쓰기
 
