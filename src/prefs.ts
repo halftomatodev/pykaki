@@ -3,12 +3,13 @@ import { create } from 'zustand';
 // Neo둥근모 (SIL OFL 1.1, licenses/OFL-NeoDunggeunmo.txt). 빌드할 때 파일 안에 들어간다
 import neodgmUrl from '@kfonts/neodgm/neodgm.woff2?url';
 
-export type ActionId = 'focus' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'newLine';
+export type ActionId = 'focus' | 'nextBox' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'newLine';
 
 // 키는 e.code(자판 위치)로 적는다. 한글 입력 상태에서도 같은 키로 동작한다
 export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
   { id: 'focus', label: '집중 모드 (화면 정리)', def: 'Ctrl+Backslash' },
   { id: 'newLine', label: '같은 화자로 새 줄', def: 'Ctrl+Enter' },
+  { id: 'nextBox', label: '다음 상자로 이어 쓰기', def: 'Ctrl+Shift+Enter' },
   { id: 'save', label: '파일 저장', def: 'Ctrl+KeyS' },
   { id: 'saveAs', label: '다른 이름으로 저장', def: 'Ctrl+Shift+KeyS' },
   { id: 'export', label: '.rpy 같은 곳에 다시 내보내기', def: 'Ctrl+KeyE' },

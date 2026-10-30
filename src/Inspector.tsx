@@ -7,7 +7,7 @@ import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage } from './stage';
 import { hit, keyOf, usePrefs } from './prefs';
 
-type Upd = (fn: (b: BoxNode, p: Project) => void, key?: string) => void;
+export type Upd = (fn: (b: BoxNode, p: Project) => void, key?: string) => void;
 
 export function Inspector() {
   const ids = useStore((s) => s.selectedIds);
@@ -191,7 +191,7 @@ function TargetSelect({ value, onChange, self }: { value: string | null; onChang
   );
 }
 
-function ExitEditor({ b, upd }: { b: BoxNode; upd: Upd }) {
+export function ExitEditor({ b, upd }: { b: BoxNode; upd: Upd }) {
   const e = b.exit;
   return (
     <div className="exit-ed">

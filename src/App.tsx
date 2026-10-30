@@ -8,7 +8,7 @@ import { SettingsModal } from './SettingsModal';
 import { EditCaret } from './Caret';
 import { useStore } from './store';
 import { exportRpyFile, saveProject } from './files';
-import { addBoxCenter, toggleFocus } from './actions';
+import { addBoxCenter, goNextBox, toggleFocus } from './actions';
 import { hit } from './prefs';
 import { isTyping } from './util';
 
@@ -20,6 +20,7 @@ function Keys() {
       const s = useStore.getState();
       const run = (fn: () => void) => (e.preventDefault(), fn());
       if (hit(e, 'focus')) run(toggleFocus);
+      else if (s.inlineEdit && hit(e, 'nextBox')) run(() => goNextBox(s.inlineEdit!));
       else if (hit(e, 'save')) run(() => saveProject());
       else if (hit(e, 'saveAs')) run(() => saveProject(true));
       else if (hit(e, 'export')) run(() => exportRpyFile(true));

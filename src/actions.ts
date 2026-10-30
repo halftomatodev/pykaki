@@ -108,3 +108,49 @@ export function toggleFocus() {
   useStore.setState({ focusMode: on });
   if (on) useStore.getState().say(`집중 모드 · ${keyOf('focus')}로 돌아와요`);
 }
+
+// 상자 크기: 화면에 그려진 크기(확대 전). 없으면 기본값
+function boxSize(id: string) {
+  const el = document.querySelector(`.react-flow__node[data-id="${id}"]`) as HTMLElement | null;
+  return { w: el?.offsetWidth ?? 250, h: el?.offsetHeight ?? 150 };
+}
+
+// 아직 이어지지 않은 선(handle)에 새 상자를 만들어 잇고, 그 상자에서 바로 글을 쓴다
+export function continueInNewBox(fromId: string, handle: string) {
+  const s = useStore.getState();
+  const b = ops.findBox(s.project, fromId);
+  if (!b) return;
+  const links = ops.exitLinks(b);
+  const i = Math.max(0, links.findIndex((l) => l.handle === handle));
+  const { w, h } = boxSize(fromId);
+  const tb = s.project.layout.direction === 'TB';
+  // 선택지가 여럿이면 옆으로 나란히 놓는다
+  const pos = tb ? { x: b.pos.x + (i - (links.length - 1) / 2) * (w + 40), y: b.pos.y + h + 90 } : { x: b.pos.x + w + 110, y: b.pos.y + i * 180 };
+  // 다른 상자와 겹치면 흐름 방향으로 비켜 놓는다
+  const W = 250;
+  const H = 120;
+  const hits = () =>
+    s.project.nodes.some((n) => {
+      const sz = boxSize(n.id);
+      return pos.x < n.pos.x + sz.w + 20 && pos.x + W + 20 > n.pos.x && pos.y < n.pos.y + sz.h + 20 && pos.y + H + 20 > n.pos.y;
+    });
+  for (let k = 0; k < 40 && hits(); k++) tb ? (pos.y += 60) : (pos.x += 60);
+  let id = '';
+  s.update((p) => {
+    id = ops.addBox(p, pos, b.group);
+    ops.connect(p, fromId, handle, id);
+  });
+  editBox(id, null);
+}
+
+// 글을 쓰다가 다음 상자로: 이어진 상자가 있으면 그리로, 없으면 새 상자를 만들어 잇는다
+export function goNextBox(fromId: string) {
+  const s = useStore.getState();
+  const b = ops.findBox(s.project, fromId);
+  if (!b) return;
+  const next = ops.fallTarget(b);
+  if (next && ops.findBox(s.project, next)) return editBox(next, null);
+  if (b.exit.type === 'next') return continueInNewBox(fromId, 'next');
+  if (b.exit.type === 'call') return continueInNewBox(fromId, 'then');
+  s.say(b.exit.type === 'menu' ? '선택지는 오른쪽 "다음 흐름"에서 골라서 이어 써요' : '이 상자는 여기서 끝나요 (return)');
+}

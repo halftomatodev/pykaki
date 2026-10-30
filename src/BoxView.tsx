@@ -4,10 +4,11 @@ import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, Line } from './types';
 import { uid } from './util';
-import { changeThenFocus } from './actions';
+import { changeThenFocus, continueInNewBox, goNextBox } from './actions';
+import { ExitEditor, type Upd } from './Inspector';
 import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage, stageCode } from './stage';
-import { hit } from './prefs';
+import { hit, keyOf } from './prefs';
 
 // 볼 때와 글을 고칠 때 상자 모양이 같다. 고칠 때는 글자 자리가 입력칸으로 바뀌고,
 // 줄 종류·순서·삭제 단추는 상자 왼쪽 바깥에, 연출 입력칸은 오른쪽 바깥에 붙는다
@@ -27,6 +28,7 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
 
   return (
     <div className={cls} style={{ '--g': g?.color ?? 'var(--panel)' } as React.CSSProperties}>
+      {editing && <FlowCard b={b} />}
       <Handle type="target" id="in" position={tb ? Position.Top : Position.Left} />
       <div className="box-head">
         <span className="badge" title="렌파이 label">
@@ -99,6 +101,59 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
     </div>
   );
 });
+
+// 고치는 동안 상자 오른쪽에 붙는 "다음 흐름" 카드. 집중 모드에서도 편집 탭 없이 흐름을 잇게 한다
+function FlowCard({ b }: { b: BoxNode }) {
+  const update = useStore((s) => s.update);
+  const project = useStore((s) => s.project);
+  const ref = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState(0);
+
+  // 다음 흐름 줄 높이에 맞추되, 연출 입력칸과 겹치면 그 아래로 내린다
+  useLayoutEffect(() => {
+    const box = ref.current?.parentElement;
+    const exit = box?.querySelector('.box-exit') as HTMLElement | null;
+    if (!box || !exit) return;
+    let t = exit.offsetTop;
+    const stage = box.querySelector('.side-r') as HTMLElement | null;
+    if (stage) {
+      const z = box.getBoundingClientRect().height / (box.offsetHeight || 1);
+      const bottom = (stage.getBoundingClientRect().bottom - box.getBoundingClientRect().top) / z;
+      t = Math.max(t, bottom + 8);
+    }
+    if (t !== top) setTop(t);
+  });
+
+  const upd: Upd = (fn, key) => update((p) => fn(ops.findBox(p, b.id)!, p), key);
+  const open = ops.exitLinks(b).filter((l) => !l.target);
+  const name = (h: string) => {
+    if (h === 'next') return '다음';
+    if (h === 'then') return '복귀 후';
+    if (h === 'call') return 'call 대상';
+    const c = b.exit.type === 'menu' ? b.exit.choices.find((x) => 'c:' + x.id === h) : null;
+    return c ? `◆ ${c.text || '(빈 선택지)'}` : h;
+  };
+  const next = ops.fallTarget(b);
+  const nextBox = next ? project.nodes.find((n) => n.id === next) : null;
+
+  return (
+    <div className="side side-flow nodrag" style={{ top }} ref={ref}>
+      <div className="side-title">다음 흐름</div>
+      <ExitEditor b={b} upd={upd} />
+      {open.map((l) => (
+        <button key={l.handle} className="primary" onClick={() => continueInNewBox(b.id, l.handle)}>
+          ＋ {name(l.handle)} → 새 상자에 이어 쓰기
+        </button>
+      ))}
+      {nextBox && (
+        <button className="primary" onClick={() => goNextBox(b.id)} title={keyOf('nextBox')}>
+          → "{nextBox.title || nextBox.id}" 이어 쓰기
+        </button>
+      )}
+      <span className="tip">{keyOf('nextBox')}: 다음 상자로 이어 쓰기</span>
+    </div>
+  );
+}
 
 const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: '🙈', music: '🎵', sound: '🔊' };
 

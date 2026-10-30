@@ -108,19 +108,20 @@ export function Canvas() {
       before.current = null;
       return;
     }
-    const n = rf.getNode(inlineEdit);
     const el = document.querySelector('.canvas');
-    if (!n || !el) return;
+    if (!el) return;
     before.current ??= rf.getViewport();
     // 상자 크기와 (집중 모드를 바꿨으면) 캔버스 크기가 다시 재어질 때까지 조금 기다린다
     const t = setTimeout(() => {
-      const m = rf.getNode(inlineEdit) ?? n;
+      // 방금 만든 상자는 이때쯤 캔버스에 들어와 있다
+      const m = rf.getNode(inlineEdit);
+      if (!m) return;
       const w = m.measured?.width ?? 250;
       const h = m.measured?.height ?? 150;
       const { width: W, height: H } = el.getBoundingClientRect();
       // 왼쪽 단추 묶음(SIDE_L)과 오른쪽 연출 입력칸(SIDE_R)까지 화면에 들어오게, 읽기 편한 크기로. 지금보다 작게 하지는 않는다
       const SIDE_L = 170;
-      const SIDE_R = 250;
+      const SIDE_R = 320;
       const zoom = Math.max(rf.getZoom(), Math.min(1.6, (W * 0.94) / (w + SIDE_L + SIDE_R), (H * 0.8) / h));
       const cx = m.position.x + (w + SIDE_R - SIDE_L) / 2;
       const cy = h * zoom > H * 0.8 ? m.position.y + (H * 0.4) / zoom : m.position.y + h / 2;
@@ -141,6 +142,10 @@ export function Canvas() {
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     for (const c of changes) if (c.type === 'select') setSelEdge(c.selected ? c.id : null);
   }, []);
+
+  // 함수가 매번 새로 만들어지면 React Flow가 그릴 때마다 (아직 옛) 선택을 다시 알려서,
+  // 다음 상자로 넘어가자마자 편집이 풀린다. 한 번만 만든다
+  const onSelectionChange = useCallback(({ nodes: ns }: { nodes: Node[] }) => useStore.getState().select(ns.filter((n) => n.type === 'box').map((n) => n.id)), []);
 
   const onConnect = useCallback((c: Connection) => update((p) => ops.connect(p, c.source, c.sourceHandle, c.target)), [update]);
 
@@ -189,7 +194,7 @@ export function Canvas() {
             }
           })
         }
-        onSelectionChange={({ nodes: ns }) => useStore.getState().select(ns.filter((n) => n.type === 'box').map((n) => n.id))}
+        onSelectionChange={onSelectionChange}
         onNodesDelete={(ns) => {
           const ids = ns.filter((n) => n.type === 'box').map((n) => n.id);
           if (ids.length) update((p) => ops.deleteBoxes(p, ids));
