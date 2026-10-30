@@ -63,7 +63,8 @@ function focusNow(elId: string) {
   const el = document.getElementById(elId) as HTMLInputElement | HTMLTextAreaElement | null;
   if (!el) return false;
   el.focus();
-  el.setSelectionRange(el.value.length, el.value.length);
+  // 연출 줄은 줄 자체(div)가 포커스를 받아서 커서 위치가 없다
+  if ('setSelectionRange' in el) el.setSelectionRange(el.value.length, el.value.length);
   return true;
 }
 

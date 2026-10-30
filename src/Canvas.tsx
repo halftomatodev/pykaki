@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow, Background, Controls, MiniMap, MarkerType, applyNodeChanges, useReactFlow,
-  type Connection, type Edge, type EdgeChange, type Node, type NodeChange, type OnConnectEnd,
+  type Connection, type Edge, type Viewport, type EdgeChange, type Node, type NodeChange, type OnConnectEnd,
 } from '@xyflow/react';
 import { useStore } from './store';
 import { BoxView, GroupFrame } from './BoxView';
@@ -20,6 +20,8 @@ export function Canvas() {
   const play = useStore((s) => s.play);
   const focusReq = useStore((s) => s.focusReq);
   const animating = useStore((s) => s.animating);
+  const inlineEdit = useStore((s) => s.inlineEdit);
+  const focusMode = useStore((s) => s.focusMode);
   const update = useStore((s) => s.update);
   const dark = usePrefs((p) => isDark(colorsOf(p)));
   const rf = useReactFlow();
@@ -96,6 +98,36 @@ export function Canvas() {
     if (!n) return;
     rf.setCenter(n.position.x + (n.measured?.width ?? 250) / 2, n.position.y + (n.measured?.height ?? 120) / 2, { zoom: rf.getZoom(), duration: 300 });
   }, [play?.current, rf]);
+
+  // 글을 고치기 시작하면 그 상자로 부드럽게 다가가고, 끝내면 원래 보던 곳으로 돌아간다
+  const before = useRef<Viewport | null>(null);
+  useEffect(() => {
+    if (!inlineEdit) {
+      if (before.current) rf.setViewport(before.current, { duration: 450 });
+      before.current = null;
+      return;
+    }
+    const n = rf.getNode(inlineEdit);
+    const el = document.querySelector('.canvas');
+    if (!n || !el) return;
+    before.current ??= rf.getViewport();
+    // 상자 크기와 (집중 모드를 바꿨으면) 캔버스 크기가 다시 재어질 때까지 조금 기다린다
+    const t = setTimeout(() => {
+      const m = rf.getNode(inlineEdit) ?? n;
+      const w = m.measured?.width ?? 250;
+      const h = m.measured?.height ?? 150;
+      const { width: W, height: H } = el.getBoundingClientRect();
+      // 왼쪽 단추 묶음(SIDE_L)과 오른쪽 연출 입력칸(SIDE_R)까지 화면에 들어오게, 읽기 편한 크기로. 지금보다 작게 하지는 않는다
+      const SIDE_L = 170;
+      const SIDE_R = 250;
+      const zoom = Math.max(rf.getZoom(), Math.min(1.6, (W * 0.94) / (w + SIDE_L + SIDE_R), (H * 0.8) / h));
+      const cx = m.position.x + (w + SIDE_R - SIDE_L) / 2;
+      const cy = h * zoom > H * 0.8 ? m.position.y + (H * 0.4) / zoom : m.position.y + h / 2;
+      rf.setCenter(cx, cy, { zoom, duration: 450 });
+    }, 80);
+    return () => clearTimeout(t);
+    // 집중 모드를 켜고 끄면 캔버스 크기가 바뀌므로 다시 맞춘다
+  }, [inlineEdit, focusMode, rf]);
 
   useEffect(() => {
     if (focusReq?.ids.length) setTimeout(() => rf.fitView({ nodes: focusReq.ids.map((id) => ({ id })), duration: 400, padding: 0.3, maxZoom: 1.1 }), 30);
