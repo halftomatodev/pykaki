@@ -167,6 +167,8 @@
 - **글꼴**: 기본(시스템 한글 글꼴)과 Neo둥근모. CSS 변수 `--font`(본문)·`--mono`(코드)로 화면 전체를 바꾼다. Neo둥근모는 `@kfonts/neodgm`의 woff2(44KB, 한글 11,172자, 글꼴 버전 1.600)를 `?url`로 가져와 빌드 때 파일 안에 넣고, 고르거나 설정 창을 열 때 `FontFace`로 등록한다. 라이선스는 `licenses/OFL-NeoDunggeunmo.txt`.
 - **상자 진하기** (`boxStrength`, 0~100, 기본 30): CSS `--box-strength`(0~1). 상자 바탕은 (label 색과 면 색을 `--box-mix`로 섞은 색)을 이 비율만큼 바탕 위에 칠하고, 상자 테두리·label 배경·이름표·선택지·연출 코드 바탕도 이 값에 비례한다. label·캐릭터 색은 인라인 `--g`/`--c` 변수로 넘긴다.
 - **label 경계선** (`frameWidth`, 1~6px, 기본 3): CSS `--frame-w`. label 묶음 테두리를 실선으로, 색은 label 색 45%와 흐린 글자색을 섞어 옅게 두고 굵기로 보이게 한다. 1비트에서는 같은 굵기의 점선.
+- **label 색 입히기** (`labelTint`, 0~100, 기본 50): CSS `--label-tint`. 상자에 섞는 label 색 비율 `--box-mix`(밝은 테마 ×110%, 최대 100%, 어두운 테마 ×40%)와 label 배경 색에 곱한다.
+- **Apple 스타일 테마** (`apple`, `apple-color`): `data-look`. 바탕 #f2f2f7, 면 흰색, 강조 #007aff, 회색 #8e8e93. 상자·label 배경·선택지·입력칸의 테두리를 없애고 둥근 모서리(상자 16px, label 24px)와 옅은 그림자, Apple 회색 채움(rgba(118,118,128,.08~.12))으로만 구분한다. 글꼴이 "기본"이면 시스템 글꼴(-apple-system 등)을 먼저 쓴다. `apple-color`는 label·캐릭터 색의 색상(hue)만 따서 `oklch(from 색 0.7 0.16 h)`로 또렷한 색을 만들어 상자·label 배경에 `--label-tint`만큼 입히고, 이름표는 진한 색에 흰 글자. (relative color를 못 쓰는 브라우저는 원래 label 색)
 - **1비트 테마** (`onebit` 검정 바탕, `onebit-light` 흰 바탕): `data-mono="1"`. 모든 면을 바탕색으로, 테두리·글자·선·핸들·이름표를 글자색 하나로 그린다(칠하지 않고 외곽선만). 상자 진하기는 쓰지 않는다. 미니맵은 바탕색 상자에 글자색 테두리.
 - **집중 모드 흐림**: 집중 모드이고 편집 중인 상자가 있을 때(`.app.focus:has(.box.editing)`), 편집 상자 안에서 포커스가 없는 줄·제목·선택지는 `--dim-line`, 다른 상자·label 배경·선은 `--dim-box` 불투명도. 흐린 상자는 마우스를 올리면 0.6 이상으로. 단계(끄기/약하게/보통/강하게)별 값은 `prefs.ts`의 `DIMS`.
 - 환경 설정은 대본이 아니라 브라우저에 붙는 설정이라 `localStorage['pykaki-prefs']`에 둔다(못 쓰면 기본값).

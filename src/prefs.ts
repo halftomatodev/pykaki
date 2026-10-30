@@ -20,16 +20,23 @@ export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
 ];
 
 export interface Colors { bg: string; panel: string; text: string; accent: string }
-export type ThemeId = 'light' | 'paper' | 'dark' | 'onebit' | 'onebit-light' | 'custom';
+export type ThemeId = 'light' | 'paper' | 'dark' | 'onebit' | 'onebit-light' | 'apple' | 'apple-color' | 'custom';
 
 // mono: 1비트 테마. 칠하지 않고 모두 같은 바탕에 글자색 선만 긋는다
-export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean }[] = [
+// look: Apple 스타일. 경계선 없이 둥근 카드와 바탕색 차이로만 구분한다 (apple-color는 label 색을 진하게)
+export type Look = 'apple' | 'apple-color';
+export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean; look?: Look }[] = [
   { id: 'light', label: '밝게', colors: { bg: '#f5f5f3', panel: '#fcfcfb', text: '#33343a', accent: '#6b7bd6' } },
   { id: 'paper', label: '종이', colors: { bg: '#efebe2', panel: '#f8f5ee', text: '#3d3832', accent: '#a26b45' } },
   { id: 'dark', label: '어둡게', colors: { bg: '#1d1e22', panel: '#25272c', text: '#cfd0d4', accent: '#8f9cf0' } },
   { id: 'onebit', label: '1비트', colors: { bg: '#000000', panel: '#000000', text: '#ffffff', accent: '#ffffff' }, mono: true },
   { id: 'onebit-light', label: '1비트 흰 바탕', colors: { bg: '#ffffff', panel: '#ffffff', text: '#000000', accent: '#000000' }, mono: true },
+  { id: 'apple', label: 'Apple 스타일', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple' },
+  { id: 'apple-color', label: 'Apple 컬러풀', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple-color' },
 ];
+
+// Apple 스타일의 기본 글꼴 (Neo둥근모를 고르면 그쪽이 먼저)
+const APPLE_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', system-ui, sans-serif";
 
 export type FontId = 'default' | 'neodgm';
 export const FONTS: { id: FontId; label: string; family: string; mono: string }[] = [
@@ -54,13 +61,14 @@ interface Prefs {
   dim: DimId;
   boxStrength: number; // 상자·label 배경·이름표를 얼마나 진하게 칠할지 (0~100)
   frameWidth: number; // label 경계선 굵기 (px)
+  labelTint: number; // 상자와 label 배경에 label 색을 얼마나 입힐지 (0~100)
 }
 
 const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3 };
+  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50 };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
@@ -76,6 +84,7 @@ export const resetKeys = () => usePrefs.setState({ keys: defKeys() });
 const themeOf = (p: Prefs) => THEMES.find((t) => t.id === p.theme) ?? THEMES[0];
 export const colorsOf = (p: Prefs) => (p.theme === 'custom' ? p.custom : themeOf(p).colors);
 export const isMono = (p: Prefs) => p.theme !== 'custom' && !!themeOf(p).mono;
+export const lookOf = (p: Prefs) => (p.theme === 'custom' ? undefined : themeOf(p).look);
 
 // 배경이 어두우면 캔버스(React Flow)도 어두운 모드로
 export function isDark(c: Colors) {
@@ -93,10 +102,12 @@ function apply(p: Prefs) {
   r.dataset.dark = isDark(c) ? '1' : '';
   r.dataset.mono = isMono(p) ? '1' : '';
   r.style.setProperty('--frame-w', Math.min(6, Math.max(1, p.frameWidth)) + 'px');
+  r.dataset.look = lookOf(p) ?? '';
+  r.style.setProperty('--label-tint', String(Math.min(100, Math.max(0, p.labelTint)) / 100));
   r.style.setProperty('--box-strength', String(Math.min(100, Math.max(0, p.boxStrength)) / 100));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
-  r.style.setProperty('--font', f.family);
+  r.style.setProperty('--font', lookOf(p) && f.id === 'default' ? APPLE_FONT : f.family);
   r.style.setProperty('--mono', f.mono);
   r.dataset.font = f.id;
   const dm = DIMS.find((x) => x.id === p.dim) ?? DIMS[2];
