@@ -93,7 +93,7 @@ export function editBox(boxId: string, part: string | null) {
     } else target = b.lines[b.lines.length - 1].id;
   }
   s.select([boxId]);
-  useStore.setState({ inlineEdit: boxId });
+  useStore.setState({ inlineEdit: boxId, flowMenu: false });
   focusField(target === 'title' ? 'in-title-' + boxId : 'in-' + target);
 }
 

@@ -40,7 +40,7 @@ function measure(el: Field, pos: number): Spot {
 }
 
 const editable = (el: Element | null): el is Field =>
-  !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text')) && !!el.closest('.box.editing');
+  !!el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'text' && !(el as HTMLInputElement).readOnly)) && !!el.closest('.box.editing');
 
 export function EditCaret() {
   const [at, setAt] = useState<{ left: number; top: number; width: number; height: number; k: string } | null>(null);

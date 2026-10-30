@@ -21,6 +21,7 @@ function Keys() {
       const run = (fn: () => void) => (e.preventDefault(), fn());
       if (hit(e, 'focus')) run(toggleFocus);
       else if (s.inlineEdit && hit(e, 'nextBox')) run(() => goNextBox(s.inlineEdit!));
+      else if (s.inlineEdit && hit(e, 'flowMenu')) run(() => useStore.setState({ flowMenu: !s.flowMenu }));
       else if (hit(e, 'save')) run(() => saveProject());
       else if (hit(e, 'saveAs')) run(() => saveProject(true));
       else if (hit(e, 'export')) run(() => exportRpyFile(true));

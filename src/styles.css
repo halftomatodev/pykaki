@@ -200,21 +200,35 @@ input.box-title.ed { flex: 1; min-width: 0; }
 .side-attr { flex: 1 0 100%; order: 9; }
 .side .grip { padding: 0 3px; }
 .side-r .sf { width: 100%; }
-/* 다음 흐름 카드: 상자 오른쪽, 다음 흐름 줄 높이 */
+/* 다음 흐름 창: 상자 오른쪽, 다음 흐름 줄 높이. 반투명 유리처럼 보여서 글 상자와 다른 종류의 창이라는 게 드러난다 */
 .box { position: relative; }
 .side-flow {
-  left: calc(100% + 20px); width: 290px; flex-direction: column; align-items: stretch; gap: 3px; padding: 6px 8px;
-  opacity: 0.7; transition: top 0.22s ease, opacity 0.2s;
+  left: calc(100% + 20px); width: 290px; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px;
+  background: color-mix(in srgb, var(--panel) 62%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+  opacity: 0.55; transition: top 0.22s ease, opacity 0.2s, box-shadow 0.2s;
 }
-.side-flow:hover, .side-flow:focus-within { opacity: 1; }
-.side-flow .side-title { font-weight: 700; color: var(--muted); font-size: 11px; }
-.side-flow .exit-ed .row { margin-bottom: 3px; flex-wrap: nowrap; }
-.side-flow .exit-ed .row > label { width: 44px; }
-.side-flow .exit-ed .tip { display: none; }
-.side-flow .choice-ed { gap: 2px; margin-bottom: 3px; }
-.side-flow .choice-ed input { min-width: 0; }
-.side-flow > button { text-align: left; white-space: normal; }
-.side-flow > .tip { font-size: 10.5px; }
+.side-flow:hover, .side-flow.active { opacity: 1; }
+.side-flow.active { background: color-mix(in srgb, var(--panel) 78%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent), 0 8px 30px rgba(0, 0, 0, 0.14); }
+.side-flow .side-title { display: flex; justify-content: space-between; font-weight: 700; color: var(--muted); font-size: 11px; }
+.fm-key { font-weight: 400; font-family: var(--mono); opacity: 0.8; }
+.fm-list { max-height: 300px; overflow: auto; margin: 2px -4px; padding: 0 4px; }
+.fm-sec { font-size: 10.5px; color: var(--muted); margin: 6px 0 1px; }
+.fm-item { display: flex; align-items: baseline; gap: 4px; padding: 3px 6px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.fm-item:hover { background: var(--hover); }
+.fm-item.cur { background: var(--accent); color: var(--panel); }
+.fm-item.on .fm-label { font-weight: 700; }
+.fm-dot { width: 9px; flex: none; font-size: 8px; color: var(--accent); }
+.fm-item.cur .fm-dot, .fm-item.cur .fm-hint { color: inherit; }
+.fm-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-hint { flex: none; font-size: 10.5px; color: var(--muted); }
+.side-flow input.fm-query { width: 100%; font-size: 12px; margin: 2px 0; }
+/* 첫 단계의 키 받는 칸은 보이지 않게 */
+.side-flow input.fm-keys { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+.fm-help { font-size: 10.5px; margin-top: 3px; }
+[data-mono='1'] .side-flow { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border-style: dashed; }
+[data-mono='1'] .fm-item.cur { background: var(--text); color: var(--bg); }
 .more { color: var(--muted); font-size: 11px; }
 .todo { color: var(--danger); font-style: normal; }
 .box-exit { padding: 5px 8px 8px; font-size: 11.5px; color: var(--muted); }
