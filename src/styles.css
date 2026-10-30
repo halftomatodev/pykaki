@@ -25,6 +25,7 @@
   --dim-line: 0.4;
   --dim-box: 0.18;
   font-family: var(--font);
+  font-weight: var(--font-weight, 400);
   font-size: 13px;
   color: var(--text);
   color-scheme: light;
@@ -423,3 +424,4 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 [data-look='apple-color'] .frame span { color: color-mix(in srgb, var(--gv) 70%, #000); }
 [data-look='apple-color'] .pl .who { background: var(--cv); color: #fff; }
 [data-look='apple-color'] .choice { background: rgba(255, 255, 255, 0.7); color: var(--accent); font-weight: 600; }
+.row > label.pick[for] { width: 96px; flex-shrink: 0; }

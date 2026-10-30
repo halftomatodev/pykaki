@@ -2,6 +2,8 @@
 import { create } from 'zustand';
 // Neo둥근모 (SIL OFL 1.1, licenses/OFL-NeoDunggeunmo.txt). 빌드할 때 파일 안에 들어간다
 import neodgmUrl from '@kfonts/neodgm/neodgm.woff2?url';
+// Pretendard (SIL OFL 1.1, licenses/OFL-Pretendard.txt). 굵기를 고를 수 있는 가변 글꼴 하나를 파일 안에 넣는다
+import pretendardUrl from 'pretendard/dist/web/variable/woff2/PretendardVariable.woff2?url';
 
 export type ActionId = 'focus' | 'nextBox' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'newLine';
 
@@ -35,13 +37,16 @@ export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Co
   { id: 'apple-color', label: 'Apple 컬러풀', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple-color' },
 ];
 
-// Apple 스타일의 기본 글꼴 (Neo둥근모를 고르면 그쪽이 먼저)
-const APPLE_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', system-ui, sans-serif";
 
-export type FontId = 'default' | 'neodgm';
-export const FONTS: { id: FontId; label: string; family: string; mono: string }[] = [
-  { id: 'default', label: '기본', family: "'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif", mono: "Consolas, 'D2Coding', monospace" },
-  { id: 'neodgm', label: 'Neo둥근모', family: "'NeoDunggeunmo', 'Malgun Gothic', sans-serif", mono: "'NeoDunggeunmo', Consolas, monospace" },
+export type FontId = 'default' | 'pretendard-500' | 'pretendard-600' | 'neodgm';
+// 'default'는 예전 설정과 맞추려고 Pretendard 400의 id로 남겨 둔다
+const PRETENDARD = "'Pretendard Variable', 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif";
+const MONO = "Consolas, 'D2Coding', monospace";
+export const FONTS: { id: FontId; label: string; family: string; mono: string; weight: number }[] = [
+  { id: 'default', label: 'Pretendard 400', family: PRETENDARD, mono: MONO, weight: 400 },
+  { id: 'pretendard-500', label: 'Pretendard 500', family: PRETENDARD, mono: MONO, weight: 500 },
+  { id: 'pretendard-600', label: 'Pretendard 600', family: PRETENDARD, mono: MONO, weight: 600 },
+  { id: 'neodgm', label: 'Neo둥근모', family: "'NeoDunggeunmo', 'Malgun Gothic', sans-serif", mono: "'NeoDunggeunmo', Consolas, monospace", weight: 400 },
 ];
 
 // 집중 모드에서 글을 쓸 때: [같은 상자의 다른 줄, 다른 상자] 불투명도
@@ -107,7 +112,8 @@ function apply(p: Prefs) {
   r.style.setProperty('--box-strength', String(Math.min(100, Math.max(0, p.boxStrength)) / 100));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
-  r.style.setProperty('--font', lookOf(p) && f.id === 'default' ? APPLE_FONT : f.family);
+  r.style.setProperty('--font', f.family);
+  r.style.setProperty('--font-weight', String(f.weight));
   r.style.setProperty('--mono', f.mono);
   r.dataset.font = f.id;
   const dm = DIMS.find((x) => x.id === p.dim) ?? DIMS[2];
@@ -116,15 +122,17 @@ function apply(p: Prefs) {
 }
 
 // 글꼴은 고르거나 설정 창에서 미리 볼 때만 읽어 들인다
-let fontAdded = false;
-const loadFont = (p: Prefs) => p.font === 'neodgm' && ensureNeodgm();
-export function ensureNeodgm() {
-  if (fontAdded || typeof FontFace === 'undefined') return;
-  fontAdded = true;
-  const ff = new FontFace('NeoDunggeunmo', `url(${neodgmUrl}) format('woff2')`);
+const added = new Set<string>();
+function addFont(family: string, url: string, weight = '400') {
+  if (added.has(family) || typeof FontFace === 'undefined') return;
+  added.add(family);
+  const ff = new FontFace(family, `url(${url}) format('woff2')`, { weight, display: 'swap' });
   document.fonts.add(ff);
-  ff.load().catch((e) => console.warn('글꼴을 못 읽었어요', e));
+  ff.load().catch((e) => console.warn('글꼴을 못 읽었어요', family, e));
 }
+export const ensureNeodgm = () => addFont('NeoDunggeunmo', neodgmUrl);
+export const ensurePretendard = () => addFont('Pretendard Variable', pretendardUrl, '45 930');
+const loadFont = (p: Prefs) => (p.font === 'neodgm' ? ensureNeodgm() : ensurePretendard());
 
 apply(usePrefs.getState());
 loadFont(usePrefs.getState());

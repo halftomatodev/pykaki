@@ -1,7 +1,7 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
+import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
 
@@ -72,18 +72,18 @@ function ColorPrefs() {
 function LookPrefs() {
   const font = usePrefs((p) => p.font);
   const dim = usePrefs((p) => p.dim);
-  useEffect(ensureNeodgm, []);
+  useEffect(() => (ensureNeodgm(), ensurePretendard()), []);
   return (
     <>
       <h4>글꼴</h4>
       <div className="row">
         {FONTS.map((f) => (
-          <button key={f.id} className={'swatch' + (font === f.id ? ' on' : '')} style={{ fontFamily: f.family }} onClick={() => usePrefs.setState({ font: f.id })}>
+          <button key={f.id} className={'swatch' + (font === f.id ? ' on' : '')} style={{ fontFamily: f.family, fontWeight: f.weight }} onClick={() => usePrefs.setState({ font: f.id })}>
             {f.label} · 가나다 Abc 123
           </button>
         ))}
       </div>
-      <p className="tip">화면 전체에 적용돼요. Neo둥근모는 SIL Open Font License로 배포되는 무료 글꼴이에요.</p>
+      <p className="tip">화면 전체에 적용돼요. Pretendard는 숫자가 클수록 굵어요. 두 글꼴 모두 SIL Open Font License로 배포되는 무료 글꼴이고, 파일 안에 들어 있어서 인터넷 없이도 보여요.</p>
 
       <h4>집중 모드 흐림</h4>
       <div className="row">

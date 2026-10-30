@@ -14,7 +14,7 @@
 - 렌파이 대화창처럼 미리 플레이해 보기
 - 문제(연결 안 된 선, 빈 대사, 잘못된 이름) 검사
 - `.rpy`로 내보내기
-- 집중 모드(화면을 비우고 쓰는 줄만 또렷하게), 화면 색·글꼴(Neo둥근모)·단축키 바꾸기
+- 집중 모드(화면을 비우고 쓰는 줄만 또렷하게), 화면 색·글꼴(Pretendard 400/500/600, Neo둥근모)·단축키 바꾸기
 
 자세한 사용법은 [사용 가이드](docs/GUIDE.md)를 보세요.
 
@@ -43,4 +43,4 @@ npm run build    # dist/index.html 한 파일로 빌드
 
 PyKaki는 Ren'Py의 공식 도구가 아니에요. 아이콘은 Ren'Py 런처 아이콘(MIT)을 보라색으로 바꾼 것이에요 ([안내](licenses/RENPY-ICON.txt)).
 
-함께 들어 있는 글꼴 **Neo둥근모**(Dalgona, 원작 김중태)는 [SIL Open Font License 1.1](licenses/OFL-NeoDunggeunmo.txt)을 따라요.
+함께 들어 있는 글꼴 **Pretendard**(길형진)와 **Neo둥근모**(Dalgona, 원작 김중태)는 SIL Open Font License 1.1을 따라요 ([Pretendard](licenses/OFL-Pretendard.txt), [Neo둥근모](licenses/OFL-NeoDunggeunmo.txt)).
