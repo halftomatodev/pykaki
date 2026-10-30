@@ -4,12 +4,13 @@ import type { Line, LineType } from './types';
 export const STAGE_TYPES: LineType[] = ['scene', 'show', 'hide', 'music', 'sound'];
 export const isStage = (t: LineType) => STAGE_TYPES.includes(t);
 
+// 줄 종류 칸이 좁아서 짧게. 실제 명령은 칸 아래에 따로 보여 준다
 export const STAGE_LABEL: Record<string, string> = {
-  scene: '🖼 배경 바꾸기 (scene)',
-  show: '🧍 보이기 (show)',
-  hide: '🙈 숨기기 (hide)',
-  music: '🎵 배경음악 (music)',
-  sound: '🔊 효과음 (sound)',
+  scene: '🖼 배경',
+  show: '🧍 보이기',
+  hide: '🙈 숨기기',
+  music: '🎵 음악',
+  sound: '🔊 효과음',
 };
 
 export const TRANSITIONS: [string, string][] = [['', '바로'], ['dissolve', '서서히'], ['fade', '검게 페이드']];

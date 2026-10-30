@@ -141,21 +141,26 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); font-size: 12px; cursor: grab;
 }
 .box.sel { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); }
-.box.editing { width: 340px; cursor: default; box-shadow: 0 4px 22px color-mix(in srgb, var(--accent) 18%, transparent); }
+.box.editing { width: 440px; cursor: default; box-shadow: 0 4px 22px color-mix(in srgb, var(--accent) 18%, transparent); }
 .il-title { flex: 1; font-weight: 700; font-size: 12px; padding: 2px 5px; }
 .il-done { font-size: 11px; padding: 1px 7px; color: var(--accent); }
 .il-lines { padding: 4px; }
 .il { border-radius: 6px; padding: 3px; margin-bottom: 3px; background: var(--panel); }
+/* 줄 종류 칸은 왼쪽, 글은 오른쪽. 형식이 글 사이에 끼지 않게 한다 */
+.il, .line { display: grid; grid-template-columns: var(--meta-w) minmax(0, 1fr); align-items: stretch; }
+.il { --meta-w: 132px; }
+.line { --meta-w: 136px; }
+.il-top, .line-top { display: flex; flex-wrap: wrap; gap: 2px 3px; align-items: center; align-content: flex-start; padding: 1px 6px 1px 0; margin: 0; }
+.il-top select, .line-top select { flex: 1; min-width: 0; }
+.il-attr, .line-top .attr { flex: 1 0 100%; order: 9; }
+.il-body, .line-body { border-left: 1px solid var(--line); padding-left: 6px; min-width: 0; }
 .il.t-command { background: var(--t-cmd); }
 .il.t-note { background: var(--t-note); }
 .il.t-stage { background: var(--t-stage); }
-.il-top { display: flex; gap: 3px; align-items: center; margin-bottom: 2px; }
 .il-top select, .il-top input, .il-top button { font-size: 11px; padding: 1px 4px; }
 .il-top select { background: transparent; color: var(--muted); }
-.il-top .sp { flex: 1; }
 .il-top button { opacity: 0; }
 .il:hover .il-top button, .il:focus-within .il-top button { opacity: 1; }
-.il-attr { width: 70px; }
 .il textarea { font-size: 12.5px; padding: 3px 5px; min-height: 1.9em; resize: none; background: transparent; }
 .il textarea:focus { background: transparent; border-color: transparent; }
 .il.t-command textarea { font-family: var(--mono); }
@@ -218,10 +223,7 @@ input.title { width: 100%; font-weight: 700; font-size: 15px; margin-bottom: 8px
 .line.t-stage { background: var(--t-stage); }
 .line.t-command textarea { font-family: var(--mono); }
 .line textarea { background: transparent; }
-.line-top { display: flex; gap: 4px; margin-bottom: 3px; align-items: center; }
 .line-top select { background: transparent; color: var(--muted); }
-.line-top .attr { width: 96px; }
-.line-top .sp { flex: 1; }
 .line-top button { padding: 1px 6px; opacity: 0; }
 .line:hover .line-top button, .line:focus-within .line-top button { opacity: 1; }
 .choice-ed { display: flex; gap: 4px; margin-bottom: 5px; }

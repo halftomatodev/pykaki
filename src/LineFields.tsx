@@ -8,7 +8,7 @@ import { POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './s
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
 
 // 줄 종류(화자) 고르기
-export function SpeakerSelect({ l, set, className, long }: { l: Line; set: SetLine; className?: string; long?: boolean }) {
+export function SpeakerSelect({ l, set, className }: { l: Line; set: SetLine; className?: string }) {
   const chars = useStore((s) => s.project.characters);
   const val = ops.speakerValue(l);
   return (
@@ -16,7 +16,7 @@ export function SpeakerSelect({ l, set, className, long }: { l: Line; set: SetLi
       <optgroup label="대사">
         <option value="narration">내레이션</option>
         {chars.map((c) => (
-          <option key={c.id} value={'say:' + c.id}>{long ? `${c.name} (${c.id})` : c.name}</option>
+          <option key={c.id} value={'say:' + c.id}>{c.name}</option>
         ))}
         {l.type === 'say' && !chars.some((c) => c.id === l.who) && <option value={val}>? {l.who}</option>}
       </optgroup>
@@ -26,7 +26,7 @@ export function SpeakerSelect({ l, set, className, long }: { l: Line; set: SetLi
         ))}
       </optgroup>
       <optgroup label="기타">
-        <option value="command">⚙ 직접 쓰는 명령</option>
+        <option value="command">⚙ 직접 명령</option>
         <option value="note"># 메모</option>
       </optgroup>
     </select>

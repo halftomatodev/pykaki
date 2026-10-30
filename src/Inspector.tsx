@@ -114,7 +114,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
 
       <h4>대사</h4>
       {b.lines.map((l, i) => (
-        <LineRow key={l.id} b={b} l={l} i={i} upd={upd} drag={drag} />
+        <LineRow key={l.id} l={l} i={i} upd={upd} drag={drag} />
       ))}
       <div className="row">
         <button onClick={addLine}>+ 줄 추가</button>
@@ -127,7 +127,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
   );
 }
 
-function LineRow({ b, l, i, upd, drag }: { b: BoxNode; l: Line; i: number; upd: Upd; drag: ReturnType<typeof useLineDrag> }) {
+function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: ReturnType<typeof useLineDrag> }) {
   const focusLineId = useStore((s) => s.focusLineId);
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -154,18 +154,17 @@ function LineRow({ b, l, i, upd, drag }: { b: BoxNode; l: Line; i: number; upd: 
     <div className={'line t-' + l.type + (isStage(l.type) ? ' t-stage' : '') + drag.cls(i)} {...drag.row(i)}>
       <div className="line-top">
         <span className="grip" {...drag.grip(i)}>⠿</span>
-        <SpeakerSelect l={l} set={set} long />
-        {l.type === 'say' && <input className="attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />}
-        <span className="sp" />
-        <button title="위로" disabled={i === 0} onClick={() => upd((x) => ops.moveLine(x, i, i - 1))}>↑</button>
-        <button title="아래로" disabled={i === b.lines.length - 1} onClick={() => upd((x) => ops.moveLine(x, i, i + 2))}>↓</button>
+        <SpeakerSelect l={l} set={set} />
         <button title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
+        {l.type === 'say' && <input className="attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />}
       </div>
-      {isStage(l.type) ? (
-        <StageFields l={l} set={set} />
-      ) : (
-        <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
-      )}
+      <div className="line-body">
+        {isStage(l.type) ? (
+          <StageFields l={l} set={set} />
+        ) : (
+          <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
+        )}
+      </div>
     </div>
   );
 }

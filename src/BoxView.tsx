@@ -134,25 +134,26 @@ function InlineLines({ b }: { b: BoxNode }) {
           <div className="il-top">
             <span className="nodrag grip" {...drag.grip(i)}>⠿</span>
             <SpeakerSelect className="nodrag" l={l} set={(fn) => upd((x) => fn(x.lines[i]))} />
-            {l.type === 'say' && (
-              <input className="nodrag il-attr" placeholder="속성" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />
-            )}
-            <span className="sp" />
             <button className="nodrag" title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
+            {l.type === 'say' && (
+              <input className="nodrag il-attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />
+            )}
           </div>
-          {isStage(l.type) ? (
-            <StageFields l={l} nd="nodrag" firstId={'in-' + l.id} set={(fn, key) => upd((x) => fn(x.lines[i]), key)} />
-          ) : (
-            <textarea
-              id={'in-' + l.id}
-              className="nodrag nowheel"
-              rows={1}
-              value={l.text}
-              placeholder={l.type === 'command' ? 'show / scene / play …' : l.type === 'note' ? '메모' : '대사'}
-              onKeyDown={(e) => onKey(e, i, l)}
-              onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)}
-            />
-          )}
+          <div className="il-body">
+            {isStage(l.type) ? (
+              <StageFields l={l} nd="nodrag" firstId={'in-' + l.id} set={(fn, key) => upd((x) => fn(x.lines[i]), key)} />
+            ) : (
+              <textarea
+                id={'in-' + l.id}
+                className="nodrag nowheel"
+                rows={1}
+                value={l.text}
+                placeholder={l.type === 'command' ? 'show / scene / play …' : l.type === 'note' ? '메모' : '대사'}
+                onKeyDown={(e) => onKey(e, i, l)}
+                onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)}
+              />
+            )}
+          </div>
         </div>
       ))}
       <div className="il-foot">
