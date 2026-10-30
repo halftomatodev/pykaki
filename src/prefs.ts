@@ -26,7 +26,7 @@ export interface Colors { bg: string; panel: string; text: string; accent: strin
 export type ThemeId = 'light' | 'paper' | 'dark' | 'onebit' | 'onebit-light' | 'apple' | 'apple-color' | 'custom';
 
 // mono: 1비트 테마. 칠하지 않고 모두 같은 바탕에 글자색 선만 긋는다
-// look: Apple 스타일. 경계선 없이 둥근 카드와 바탕색 차이로만 구분한다 (apple-color는 label 색을 진하게)
+// look: 사과 스타일(Apple 디자인 참고, 처음 값). 경계선 없이 둥근 카드와 바탕색 차이로만 구분한다 (apple-color는 label 색을 진하게)
 export type Look = 'apple' | 'apple-color';
 export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean; look?: Look }[] = [
   { id: 'light', label: '밝게', colors: { bg: '#f5f5f3', panel: '#fcfcfb', text: '#33343a', accent: '#6b7bd6' } },
@@ -34,8 +34,8 @@ export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Co
   { id: 'dark', label: '어둡게', colors: { bg: '#1d1e22', panel: '#25272c', text: '#cfd0d4', accent: '#8f9cf0' } },
   { id: 'onebit', label: '1비트', colors: { bg: '#000000', panel: '#000000', text: '#ffffff', accent: '#ffffff' }, mono: true },
   { id: 'onebit-light', label: '1비트 흰 바탕', colors: { bg: '#ffffff', panel: '#ffffff', text: '#000000', accent: '#000000' }, mono: true },
-  { id: 'apple', label: 'Apple 스타일', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple' },
-  { id: 'apple-color', label: 'Apple 컬러풀', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple-color' },
+  { id: 'apple', label: '사과 스타일', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple' },
+  { id: 'apple-color', label: '사과 컬러풀', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple-color' },
 ];
 
 
@@ -74,7 +74,7 @@ const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50 };
+  const d: Prefs = { theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50 };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };

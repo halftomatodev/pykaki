@@ -65,7 +65,7 @@ function ColorPrefs() {
         <input id="frame-w" type="range" min={1} max={6} step={0.5} value={p.frameWidth} onChange={(e) => usePrefs.setState({ frameWidth: +e.target.value })} />
         <span className="tip">{p.frameWidth}px</span>
       </div>
-      <p className="tip">상자 진하기는 상자와 이름표를 얼마나 진하게 칠할지, 상자에 label 색은 상자에 label 색을 얼마나 섞을지(높이면 label별로 구분하기 쉬워요), label 경계선은 같은 label 상자를 묶는 선의 굵기예요(Apple 스타일은 선 없이 색으로만 구분해요). label 배경은 왼쪽 label 목록에서 고른 색 그대로예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않아서 상자 진하기를 쓰지 않아요(경계선 굵기는 써요).</p>
+      <p className="tip">상자 진하기는 상자와 이름표를 얼마나 진하게 칠할지, 상자에 label 색은 상자에 label 색을 얼마나 섞을지(높이면 label별로 구분하기 쉬워요), label 경계선은 같은 label 상자를 묶는 선의 굵기예요(사과 스타일은 선 없이 색으로만 구분해요). label 배경은 왼쪽 label 목록에서 고른 색 그대로예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않아서 상자 진하기를 쓰지 않아요(경계선 굵기는 써요).</p>
     </>
   );
 }

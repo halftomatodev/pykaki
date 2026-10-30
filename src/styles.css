@@ -384,7 +384,7 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 [data-mono='1'] .exit-label.call { color: var(--text); }
 [data-mono='1'] .grp { border-left-color: var(--text) !important; border-radius: 0; }
 
-/* ── Apple 스타일: 경계선 없이 둥근 카드와 바탕색 차이로만 구분 ── */
+/* ── 사과 스타일: 경계선 없이 둥근 카드와 바탕색 차이로만 구분 ── */
 :root[data-look^='apple'] {
   --fill: rgba(118, 118, 128, 0.12); /* Apple의 회색 채움 */
   --fill-2: rgba(118, 118, 128, 0.08);
@@ -426,7 +426,7 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 [data-look^='apple'] .warn-item { border-radius: 10px; }
 [data-look^='apple'] pre.rpy { border-radius: 12px; }
 
-/* Apple 컬러풀: label 색의 색상(hue)만 따서 Apple 시스템 색처럼 또렷한 색으로 칠한다 */
+/* 사과 컬러풀: label 색의 색상(hue)만 따서 Apple 시스템 색처럼 또렷한 색으로 칠한다 */
 [data-look='apple-color'] .box { --gv: var(--g); }
 [data-look='apple-color'] .pl .who { --cv: var(--c); }
 @supports (color: oklch(from red l c h)) {
@@ -442,7 +442,7 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 input[type='color'].bc-big { width: 34px; height: 26px; border-radius: 8px; }
 input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 .bc-hex { width: 96px; font-family: var(--mono); }
-/* 상자에 직접 고른 색은 Apple 컬러풀에서도 그 색 그대로 쓴다 */
+/* 상자에 직접 고른 색은 사과 컬러풀에서도 그 색 그대로 쓴다 */
 [data-look='apple-color'] .box.own-color { --gv: var(--g); }
 
 /* 설정에서 칠한 상자: 고른 색 그대로. 글자와 흐린 글자, 선은 그 색 위에서 읽히게 다시 맞춘다
