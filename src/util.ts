@@ -32,8 +32,3 @@ export function hexAlpha(hex: string, a: number) {
 export const timeStr = (t: number) =>
   new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-// 상자 색 고르기: Apple 시스템 색
-export const BOX_COLORS: [string, string][] = [
-  ['#ff3b30', '빨강'], ['#ff9500', '주황'], ['#ffcc00', '노랑'], ['#34c759', '초록'], ['#00c7be', '민트'], ['#30b0c7', '청록'],
-  ['#32ade6', '하늘'], ['#007aff', '파랑'], ['#5856d6', '남색'], ['#af52de', '보라'], ['#ff2d55', '분홍'], ['#a2845e', '갈색'], ['#8e8e93', '회색'],
-];

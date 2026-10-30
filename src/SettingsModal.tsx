@@ -1,7 +1,6 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { BOX_COLORS } from './util';
 import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
@@ -71,12 +70,17 @@ function ColorPrefs() {
   );
 }
 
+const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+// #abc → #aabbcc
+const fullHex = (h: string) => (h.length === 4 ? '#' + [...h.slice(1)].map((x) => x + x).join('') : h).toLowerCase();
+
 // 상자 색 한꺼번에 바꾸기. 대본 파일에 저장되는 값이라 실행 취소가 된다
 function BoxColors() {
   const project = useStore((s) => s.project);
   const sel = useStore((s) => s.selectedIds);
   const [target, setTarget] = useState(sel.length ? 'sel' : 'all');
   const [color, setColor] = useState('#007aff');
+  const [hex, setHex] = useState('#007aff');
   const ids = target === 'all' ? project.nodes.map((n) => n.id) : target === 'sel' ? sel : project.nodes.filter((n) => n.group === target).map((n) => n.id);
   const paint = (c: string | undefined) => {
     useStore.getState().update((p) => {
@@ -101,18 +105,26 @@ function BoxColors() {
       </div>
       <div className="row">
         <label className="pick" htmlFor="bc-color">색</label>
-        <input id="bc-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} title="아무 색이나 골라요" />
-        <div className="box-colors">
-          {BOX_COLORS.map(([c, name]) => (
-            <button key={c} className={'bc-swatch' + (color === c ? ' on' : '')} title={name} style={{ background: c }} onClick={() => setColor(c)} />
-          ))}
-        </div>
+        <input id="bc-color" type="color" className="bc-big" value={color} onChange={(e) => (setColor(e.target.value), setHex(e.target.value))} title="눌러서 색 고르기" />
+        <input
+          className={'bc-hex' + (HEX.test(hex) ? '' : ' invalid')}
+          value={hex}
+          placeholder="#007aff"
+          maxLength={7}
+          spellCheck={false}
+          onChange={(e) => {
+            const v = e.target.value.startsWith('#') ? e.target.value : '#' + e.target.value;
+            setHex(v);
+            if (HEX.test(v)) setColor(fullHex(v));
+          }}
+          title="hex 코드 (#RRGGBB 또는 #RGB)"
+        />
       </div>
       <div className="row">
         <button className="primary" disabled={!ids.length} onClick={() => paint(color)}>칠하기</button>
         <button disabled={!ids.length} onClick={() => paint(undefined)}>label 색으로 되돌리기</button>
       </div>
-      <p className="tip">왼쪽 동그라미를 누르면 어떤 색이든 고를 수 있고, 오른쪽은 자주 쓰는 색이에요. 고른 색은 대본 파일에 저장되고 실행 취소(Ctrl+Z)가 돼요.</p>
+      <p className="tip">색 칸을 눌러 고르거나 hex 코드(#RRGGBB)를 직접 적어요. 고른 색은 대본 파일에 저장되고 실행 취소(Ctrl+Z)가 돼요.</p>
     </>
   );
 }

@@ -427,11 +427,8 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 .row > label.pick[for] { width: 96px; flex-shrink: 0; }
 
 /* 상자 색 고르기 */
-.box-colors { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-.bc-swatch { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 1px solid var(--line); line-height: 1; font-size: 11px; }
-.bc-swatch:hover:not(:disabled) { opacity: 0.85; background-color: inherit; }
-.bc-swatch.on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 3.5px var(--text); }
-.bc-swatch.none { background: var(--panel); color: var(--muted); }
-.box-colors input[type='color'] { width: 18px; height: 18px; }
+input[type='color'].bc-big { width: 34px; height: 26px; border-radius: 8px; }
+input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
+.bc-hex { width: 96px; font-family: var(--mono); }
 /* 상자에 직접 고른 색은 Apple 컬러풀에서도 그 색 그대로 쓴다 */
 [data-look='apple-color'] .box.own-color { --gv: var(--g); }
