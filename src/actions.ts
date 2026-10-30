@@ -5,6 +5,7 @@ import { useStore } from './store';
 import { layoutAll, layoutSubset } from './layout';
 import * as ops from './ops';
 import { uid } from './util';
+import { keyOf } from './prefs';
 
 export type LayoutMode = 'all' | 'label' | 'selection';
 
@@ -99,4 +100,10 @@ export function addBoxCenter(rf: ReactFlowInstance<any, any>) {
   const el = document.querySelector('.canvas')!.getBoundingClientRect();
   const pos = rf.screenToFlowPosition({ x: el.left + el.width / 2, y: el.top + el.height / 2 });
   addBoxAt({ x: pos.x - 125, y: pos.y - 50 });
+}
+
+export function toggleFocus() {
+  const on = !useStore.getState().focusMode;
+  useStore.setState({ focusMode: on });
+  if (on) useStore.getState().say(`집중 모드 · ${keyOf('focus')}로 돌아와요`);
 }

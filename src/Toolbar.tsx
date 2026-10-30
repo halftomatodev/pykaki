@@ -3,8 +3,9 @@ import { useReactFlow } from '@xyflow/react';
 import { useStore } from './store';
 import { exportRpyFile, hasRpyTarget, newProject, openProject, saveProject } from './files';
 import { snapAdd, snapDelete, snapList, type Snapshot } from './persist';
-import { addBoxCenter, runLayout } from './actions';
+import { addBoxCenter, runLayout, toggleFocus } from './actions';
 import { timeStr } from './util';
+import { keyOf } from './prefs';
 
 export function Toolbar() {
   const rf = useReactFlow();
@@ -28,8 +29,8 @@ export function Toolbar() {
       <span className="brand">PyKaki</span>
       <button onClick={newProject}>새로</button>
       <button onClick={openProject}>열기</button>
-      <button onClick={() => saveProject()} title="Ctrl+S">저장</button>
-      <button onClick={() => saveProject(true)} title="Ctrl+Shift+S">다른 이름</button>
+      <button onClick={() => saveProject()} title={keyOf('save')}>저장</button>
+      <button onClick={() => saveProject(true)} title={keyOf('saveAs')}>다른 이름</button>
       <span className="sep" />
       <button onClick={saveVersion}>버전 저장</button>
       <button onClick={() => setShowVersions(true)}>버전 목록</button>
@@ -47,19 +48,20 @@ export function Toolbar() {
         <option value="LR">→ 왼→오른</option>
       </select>
       <span className="sep" />
-      <button disabled={!s.past.length} onClick={s.undo} title="실행 취소 (Ctrl+Z)">↶</button>
-      <button disabled={!s.future.length} onClick={s.redo} title="다시 실행 (Ctrl+Y)">↷</button>
+      <button disabled={!s.past.length} onClick={s.undo} title={'실행 취소 ' + keyOf('undo')}>↶</button>
+      <button disabled={!s.future.length} onClick={s.redo} title={'다시 실행 ' + keyOf('redo')}>↷</button>
       <span className="sep" />
-      <button className="primary" onClick={() => s.startPlay(null)}>▶ 플레이</button>
+      <button className="primary" onClick={() => s.startPlay(null)} title={keyOf('play')}>▶ 플레이</button>
       <button onClick={() => exportRpyFile(false)}>.rpy 내보내기</button>
-      {hasRpyTarget() && <button onClick={() => exportRpyFile(true)} title="Ctrl+E">같은 곳에 다시</button>}
+      {hasRpyTarget() && <button onClick={() => exportRpyFile(true)} title={keyOf('export')}>같은 곳에 다시</button>}
       <span className="grow" />
-      {s.flash && <span className="flash">{s.flash}</span>}
       <span className="status">
         {s.fileName ?? '파일로 저장 안 됨'}
         {s.dirty && <b className="dirty" title="파일로 저장하지 않은 변경이 있어요"> ●</b>}
         {s.localSavedAt && <> · 자동 저장 {timeStr(s.localSavedAt)}</>}
       </span>
+      <button onClick={toggleFocus} title={'집중 모드: 캔버스만 남기기 ' + keyOf('focus')}>집중</button>
+      <button onClick={() => useStore.setState({ showPrefs: true })} title="화면 색, 단축키">설정</button>
       {showVersions && <Versions onClose={() => setShowVersions(false)} />}
     </div>
   );

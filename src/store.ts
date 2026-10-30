@@ -24,6 +24,8 @@ interface S {
   play: PlayView | null;
   focusReq: { ids: string[]; t: number } | null;
   animating: boolean;
+  focusMode: boolean; // 집중 모드: 캔버스만 남기고 나머지 화면을 숨긴다
+  showPrefs: boolean; // 환경 설정 창
   update(fn: (p: Project) => void, key?: string): void;
   load(p: Project, o?: { fileName?: string | null; dirty?: boolean }): void;
   undo(): void;
@@ -57,6 +59,8 @@ export const useStore = create<S>((set, get) => ({
   play: null,
   focusReq: null,
   animating: false,
+  focusMode: false,
+  showPrefs: false,
 
   // 같은 key로 빠르게 이어지는 변경(타이핑)은 실행 취소 한 번으로 묶는다
   update: (fn, key) =>

@@ -7,6 +7,7 @@ import { hexAlpha, uid } from './util';
 import { changeThenFocus } from './actions';
 import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage, stageCode } from './stage';
+import { hit, keyOf } from './prefs';
 
 export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const project = useStore((s) => s.project);
@@ -25,7 +26,7 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const onEsc = (e: React.KeyboardEvent) => e.key === 'Escape' && close();
 
   return (
-    <div className={cls} style={{ background: g?.color ?? '#fff' }}>
+    <div className={cls} style={{ background: g ? `color-mix(in srgb, ${g.color} var(--box-mix), var(--panel))` : 'var(--panel)' }}>
       <Handle type="target" id="in" position={tb ? Position.Top : Position.Left} />
       <div className="box-head">
         <span className="badge" title="렌파이 label">
@@ -118,7 +119,7 @@ function InlineLines({ b }: { b: BoxNode }) {
 
   const onKey = (e: React.KeyboardEvent, i: number, l: Line) => {
     if (e.key === 'Escape') useStore.setState({ inlineEdit: null });
-    else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    else if (hit(e, 'newLine')) {
       e.preventDefault();
       addAfter(i, l);
     }
@@ -156,7 +157,7 @@ function InlineLines({ b }: { b: BoxNode }) {
       ))}
       <div className="il-foot">
         <button className="nodrag il-add" onClick={() => addAfter(b.lines.length - 1, b.lines[b.lines.length - 1])}>+ 줄</button>
-        <span className="tip">Ctrl+Enter 새 줄 · ⠿ 끌어서 순서 · Esc 완료</span>
+        <span className="tip">{keyOf('newLine')} 새 줄 · ⠿ 끌어서 순서 · Esc 완료</span>
       </div>
     </div>
   );
@@ -195,7 +196,7 @@ export function GroupFrame({ data }: NodeProps) {
   const g = useStore((s) => s.project.labels.find((l) => l.id === (data as any).groupId));
   if (!g) return null;
   return (
-    <div className="frame" style={{ borderColor: g.color, background: hexAlpha(g.color, 0.28) }}>
+    <div className="frame" style={{ borderColor: hexAlpha(g.color, 0.7), background: hexAlpha(g.color, 0.16) }}>
       <span title="클릭: 이 label의 상자 모두 선택">
         {g.title ? `${g.title} · ` : ''}
         <code>{g.name}</code>

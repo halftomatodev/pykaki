@@ -8,6 +8,7 @@ import { BoxView, GroupFrame } from './BoxView';
 import * as ops from './ops';
 import { addBoxAt, editBox } from './actions';
 import { isTyping } from './util';
+import { colorsOf, isDark, usePrefs } from './prefs';
 
 const nodeTypes = { box: BoxView, frame: GroupFrame };
 const FRAME_PAD = 22;
@@ -20,6 +21,7 @@ export function Canvas() {
   const focusReq = useStore((s) => s.focusReq);
   const animating = useStore((s) => s.animating);
   const update = useStore((s) => s.update);
+  const dark = usePrefs((p) => isDark(colorsOf(p)));
   const rf = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selEdge, setSelEdge] = useState<string | null>(null);
@@ -141,6 +143,7 @@ export function Canvas() {
         nodes={allNodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        colorMode={dark ? 'dark' : 'light'}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -181,13 +184,15 @@ export function Canvas() {
         minZoom={0.1}
         maxZoom={2}
       >
-        <Background gap={24} />
+        <Background gap={24} color="var(--line)" />
         <Controls showInteractive={false} />
         <MiniMap
           pannable
           zoomable
           nodeColor={(n) => (n.type === 'frame' ? 'transparent' : project.labels.find((g) => g.id === ops.findBox(project, n.id)?.group)?.color ?? '#ddd')}
-          nodeStrokeColor="#94a3b8"
+          nodeStrokeColor="transparent"
+          maskColor="color-mix(in srgb, var(--bg) 70%, transparent)"
+          bgColor="var(--panel)"
         />
       </ReactFlow>
       <div className="canvas-hint">빈 곳 더블클릭: 새 상자 · 상자 더블클릭: 글 쓰기 · 선을 빈 곳에 놓기: 새 상자로 연결 · 선 더블클릭: jump↔call · Shift+드래그: 여러 개 선택 · Delete: 삭제</div>

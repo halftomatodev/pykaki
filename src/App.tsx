@@ -1,39 +1,49 @@
 import { useEffect } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import { Toolbar } from './Toolbar';
 import { Sidebar } from './Sidebar';
 import { Canvas } from './Canvas';
 import { RightPanel } from './Panels';
+import { SettingsModal } from './SettingsModal';
+import { EditCaret } from './Caret';
 import { useStore } from './store';
 import { exportRpyFile, saveProject } from './files';
+import { addBoxCenter, toggleFocus } from './actions';
+import { hit } from './prefs';
 import { isTyping } from './util';
 
-export function App() {
+// 단축키는 환경 설정에서 바꿀 수 있다 (prefs.ts)
+function Keys() {
+  const rf = useReactFlow();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
-      const k = e.key.toLowerCase();
-      if (k === 's') {
-        e.preventDefault();
-        saveProject(e.shiftKey);
-      } else if (k === 'e') {
-        e.preventDefault();
-        exportRpyFile(true);
-      } else if (!isTyping(e.target) && (k === 'z' || k === 'y')) {
-        e.preventDefault();
-        const s = useStore.getState();
-        if (k === 'y' || (k === 'z' && e.shiftKey)) s.redo();
-        else s.undo();
-      }
+      const s = useStore.getState();
+      const run = (fn: () => void) => (e.preventDefault(), fn());
+      if (hit(e, 'focus')) run(toggleFocus);
+      else if (hit(e, 'save')) run(() => saveProject());
+      else if (hit(e, 'saveAs')) run(() => saveProject(true));
+      else if (hit(e, 'export')) run(() => exportRpyFile(true));
+      else if (hit(e, 'newBox')) run(() => addBoxCenter(rf));
+      else if (hit(e, 'play')) run(() => s.startPlay(null));
+      // 입력칸 안에서는 브라우저의 글자 되돌리기를 쓴다
+      else if (!isTyping(e.target) && hit(e, 'undo')) run(s.undo);
+      else if (!isTyping(e.target) && hit(e, 'redo')) run(s.redo);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [rf]);
+  return null;
+}
+
+export function App() {
+  const focus = useStore((s) => s.focusMode);
+  const showPrefs = useStore((s) => s.showPrefs);
+  const flash = useStore((s) => s.flash);
 
   return (
     <ReactFlowProvider>
-      <div className="app">
+      <Keys />
+      <div className={'app' + (focus ? ' focus' : '')}>
         <Toolbar />
         <div className="main">
           <Sidebar />
@@ -41,6 +51,9 @@ export function App() {
           <RightPanel />
         </div>
       </div>
+      {flash && <div className="toast">{flash}</div>}
+      {showPrefs && <SettingsModal />}
+      <EditCaret />
     </ReactFlowProvider>
   );
 }
