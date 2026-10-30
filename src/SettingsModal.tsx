@@ -1,7 +1,7 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { ACTIONS, THEMES, colorsOf, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
+import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
 
@@ -12,6 +12,7 @@ export function SettingsModal() {
         <h3>환경 설정</h3>
         <p className="tip">이 브라우저에만 저장돼요. 대본 파일에는 들어가지 않아요.</p>
         <ColorPrefs />
+        <LookPrefs />
         <KeyPrefs />
         <div className="row end">
           <button onClick={close}>닫기</button>
@@ -48,6 +49,35 @@ function ColorPrefs() {
         ))}
       </div>
       <p className="tip">색을 바꾸면 "직접 고르기"로 저장돼요. label 상자 색은 왼쪽 label 목록에서 바꿔요.</p>
+    </>
+  );
+}
+
+function LookPrefs() {
+  const font = usePrefs((p) => p.font);
+  const dim = usePrefs((p) => p.dim);
+  useEffect(ensureNeodgm, []);
+  return (
+    <>
+      <h4>글꼴</h4>
+      <div className="row">
+        {FONTS.map((f) => (
+          <button key={f.id} className={'swatch' + (font === f.id ? ' on' : '')} style={{ fontFamily: f.family }} onClick={() => usePrefs.setState({ font: f.id })}>
+            {f.label} · 가나다 Abc 123
+          </button>
+        ))}
+      </div>
+      <p className="tip">화면 전체에 적용돼요. Neo둥근모는 SIL Open Font License로 배포되는 무료 글꼴이에요.</p>
+
+      <h4>집중 모드 흐림</h4>
+      <div className="row">
+        {DIMS.map((d) => (
+          <button key={d.id} className={'swatch' + (dim === d.id ? ' on' : '')} onClick={() => usePrefs.setState({ dim: d.id })}>
+            {d.label}
+          </button>
+        ))}
+      </div>
+      <p className="tip">집중 모드에서 상자 안에 글을 쓰는 동안, 커서가 있는 줄 말고는 흐려지고 다른 상자는 더 흐려져요. 흐린 상자에 마우스를 올리면 잠깐 또렷해져요.</p>
     </>
   );
 }

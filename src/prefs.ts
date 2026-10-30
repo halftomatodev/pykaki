@@ -1,5 +1,7 @@
 // 환경 설정(화면 색, 단축키). 대본이 아니라 이 브라우저에 붙는 설정이라 localStorage에 둔다.
 import { create } from 'zustand';
+// Neo둥근모 (SIL OFL 1.1, licenses/OFL-NeoDunggeunmo.txt). 빌드할 때 파일 안에 들어간다
+import neodgmUrl from '@kfonts/neodgm/neodgm.woff2?url';
 
 export type ActionId = 'focus' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'newLine';
 
@@ -25,17 +27,34 @@ export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Co
   { id: 'dark', label: '어둡게', colors: { bg: '#1d1e22', panel: '#25272c', text: '#cfd0d4', accent: '#8f9cf0' } },
 ];
 
+export type FontId = 'default' | 'neodgm';
+export const FONTS: { id: FontId; label: string; family: string; mono: string }[] = [
+  { id: 'default', label: '기본', family: "'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif", mono: "Consolas, 'D2Coding', monospace" },
+  { id: 'neodgm', label: 'Neo둥근모', family: "'NeoDunggeunmo', 'Malgun Gothic', sans-serif", mono: "'NeoDunggeunmo', Consolas, monospace" },
+];
+
+// 집중 모드에서 글을 쓸 때: [같은 상자의 다른 줄, 다른 상자] 불투명도
+export type DimId = 'off' | 'weak' | 'mid' | 'strong';
+export const DIMS: { id: DimId; label: string; line: number; box: number }[] = [
+  { id: 'off', label: '끄기', line: 1, box: 1 },
+  { id: 'weak', label: '약하게', line: 0.6, box: 0.4 },
+  { id: 'mid', label: '보통', line: 0.4, box: 0.18 },
+  { id: 'strong', label: '강하게', line: 0.22, box: 0.07 },
+];
+
 interface Prefs {
   theme: ThemeId;
   custom: Colors;
   keys: Record<ActionId, string>;
+  font: FontId;
+  dim: DimId;
 }
 
 const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys() };
+  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid' };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
@@ -64,11 +83,31 @@ function apply(p: Prefs) {
   r.style.setProperty('--text', c.text);
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
+  const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
+  r.style.setProperty('--font', f.family);
+  r.style.setProperty('--mono', f.mono);
+  r.dataset.font = f.id;
+  const dm = DIMS.find((x) => x.id === p.dim) ?? DIMS[2];
+  r.style.setProperty('--dim-line', String(dm.line));
+  r.style.setProperty('--dim-box', String(dm.box));
+}
+
+// 글꼴은 고르거나 설정 창에서 미리 볼 때만 읽어 들인다
+let fontAdded = false;
+const loadFont = (p: Prefs) => p.font === 'neodgm' && ensureNeodgm();
+export function ensureNeodgm() {
+  if (fontAdded || typeof FontFace === 'undefined') return;
+  fontAdded = true;
+  const ff = new FontFace('NeoDunggeunmo', `url(${neodgmUrl}) format('woff2')`);
+  document.fonts.add(ff);
+  ff.load().catch((e) => console.warn('글꼴을 못 읽었어요', e));
 }
 
 apply(usePrefs.getState());
+loadFont(usePrefs.getState());
 usePrefs.subscribe((p) => {
   apply(p);
+  loadFont(p);
   try {
     localStorage.setItem(KEY, JSON.stringify(p));
   } catch {

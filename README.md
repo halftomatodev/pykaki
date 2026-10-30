@@ -14,7 +14,7 @@
 - 렌파이 대화창처럼 미리 플레이해 보기
 - 문제(연결 안 된 선, 빈 대사, 잘못된 이름) 검사
 - `.rpy`로 내보내기
-- 집중 모드(화면을 비우고 글만 쓰기), 화면 색과 단축키 바꾸기
+- 집중 모드(화면을 비우고 쓰는 줄만 또렷하게), 화면 색·글꼴(Neo둥근모)·단축키 바꾸기
 
 자세한 사용법은 [사용 가이드](docs/GUIDE.md)를 보세요.
 
@@ -40,3 +40,5 @@ npm run build    # dist/index.html 한 파일로 빌드
 
 [MIT](LICENSE) © halftomato
 누구나 자유롭게 쓰고, 고치고, 다시 배포할 수 있어요. 저작권 표시와 라이선스 문구만 남겨 주세요.
+
+함께 들어 있는 글꼴 **Neo둥근모**(Dalgona, 원작 김중태)는 [SIL Open Font License 1.1](licenses/OFL-NeoDunggeunmo.txt)을 따라요.

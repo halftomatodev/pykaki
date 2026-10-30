@@ -16,7 +16,11 @@
   --t-stage: color-mix(in srgb, #22c55e 8%, var(--panel));
   --box-mix: 55%;
   --ok-text: color-mix(in srgb, #15803d 75%, var(--text));
-  font-family: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --mono: Consolas, 'D2Coding', monospace;
+  --dim-line: 0.4;
+  --dim-box: 0.18;
+  font-family: var(--font);
   font-size: 13px;
   color: var(--text);
   color-scheme: light;
@@ -48,7 +52,7 @@ select:hover, input:hover, textarea:hover { border-color: var(--line); }
 input:focus, textarea:focus, select:focus { outline: none; border-color: color-mix(in srgb, var(--accent) 45%, var(--panel)); background: var(--panel); }
 textarea { width: 100%; resize: vertical; field-sizing: content; min-height: 2.3em; line-height: 1.5; }
 ::placeholder { color: color-mix(in srgb, var(--text) 32%, var(--panel)); }
-code { font-family: Consolas, 'D2Coding', monospace; }
+code { font-family: var(--mono); }
 .tip { color: var(--muted); font-size: 11.5px; }
 .warn-text { color: var(--danger); }
 .invalid { border-color: color-mix(in srgb, var(--danger) 50%, var(--panel)) !important; }
@@ -89,6 +93,15 @@ code { font-family: Consolas, 'D2Coding', monospace; }
 }
 @keyframes ucaret-blink { 50% { opacity: 0; } }
 
+/* 집중 모드에서 글을 쓰는 중이면 커서가 있는 줄만 또렷하게. 같은 상자의 다른 줄은 흐리게, 다른 상자와 선은 더 흐리게 */
+.app.focus:has(.box.editing) :is(.react-flow__node-box:not(:has(.box.editing)), .react-flow__node-frame, .react-flow__edges, .react-flow__edgelabel-renderer) {
+  opacity: var(--dim-box); transition: opacity 0.25s;
+}
+.app.focus:has(.box.editing) .react-flow__node-box:not(:has(.box.editing)):hover { opacity: max(var(--dim-box), 0.6); }
+.app.focus .box.editing :is(.box-head, .il, .il-foot, .exit-label, .choice, .il-add) { transition: opacity 0.25s; }
+.app.focus .box.editing :is(.box-head, .il, .il-foot, .exit-label, .choice, .il-add):not(:focus-within) { opacity: var(--dim-line); }
+.app.focus .box.editing { box-shadow: none; border-color: transparent; }
+
 /* 왼쪽 */
 .sidebar { width: 230px; overflow: auto; background: var(--bg); padding: 8px 10px; flex-shrink: 0; }
 .sidebar h3 { font-size: 11.5px; font-weight: 600; color: var(--muted); margin: 18px 0 6px; display: flex; justify-content: space-between; align-items: center; }
@@ -96,7 +109,7 @@ code { font-family: Consolas, 'D2Coding', monospace; }
 .ptitle { width: 100%; font-weight: 700; font-size: 14px; background: transparent; }
 .item { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
 .item input:not([type='color']) { flex: 1; }
-.item .cid, .item .gname { font-family: Consolas, monospace; }
+.item .cid, .item .gname { font-family: var(--mono); }
 .item .cid { flex: 0 0 52px !important; }
 input[type='color'] { width: 20px; height: 20px; padding: 0; border: 1px solid var(--line); border-radius: 50%; flex-shrink: 0; cursor: pointer; overflow: hidden; background: none; }
 input[type='color']::-webkit-color-swatch-wrapper { padding: 0; }
@@ -145,14 +158,14 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .il-attr { width: 70px; }
 .il textarea { font-size: 12.5px; padding: 3px 5px; min-height: 1.9em; resize: none; background: transparent; }
 .il textarea:focus { background: transparent; border-color: transparent; }
-.il.t-command textarea { font-family: Consolas, monospace; }
+.il.t-command textarea { font-family: var(--mono); }
 .il-foot { display: flex; gap: 6px; align-items: center; }
 .il-add { font-size: 11px; padding: 1px 7px; margin-top: 2px; }
 .il-choice { width: 100%; font-size: 11.5px; padding: 1px 4px; }
 .box.visited { border-color: var(--play); }
 .box.playing { outline: 2.5px solid var(--play); box-shadow: 0 0 0 6px color-mix(in srgb, var(--play) 22%, transparent); }
 .box-head { display: flex; gap: 4px; align-items: center; padding: 6px 8px 4px; }
-.badge { font-size: 10px; color: var(--muted); background: var(--hover); border-radius: 4px; padding: 1px 5px; font-family: Consolas, monospace; white-space: nowrap; }
+.badge { font-size: 10px; color: var(--muted); background: var(--hover); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); white-space: nowrap; }
 .badge small { opacity: 0.6; }
 .badge.start { background: color-mix(in srgb, #16a34a 75%, var(--panel)); color: #fff; font-family: inherit; }
 .box-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -203,7 +216,7 @@ input.title { width: 100%; font-weight: 700; font-size: 15px; margin-bottom: 8px
 .line.t-command { background: var(--t-cmd); }
 .line.t-note { background: var(--t-note); }
 .line.t-stage { background: var(--t-stage); }
-.line.t-command textarea { font-family: Consolas, monospace; }
+.line.t-command textarea { font-family: var(--mono); }
 .line textarea { background: transparent; }
 .line-top { display: flex; gap: 4px; margin-bottom: 3px; align-items: center; }
 .line-top select { background: transparent; color: var(--muted); }
@@ -239,7 +252,7 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 /* 플레이 (게임 화면이라 테마와 상관없이 어둡게) */
 .stage { background: linear-gradient(#2b3047, #1a1d2b); border-radius: 10px; height: 320px; position: relative; color: #fff; overflow: hidden; }
 .cmds { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
-.cmds span { background: rgba(255, 255, 255, 0.12); font-family: Consolas, monospace; font-size: 11px; padding: 1px 6px; border-radius: 4px; color: #c7d2fe; }
+.cmds span { background: rgba(255, 255, 255, 0.12); font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; color: #c7d2fe; }
 .pmenu { position: absolute; top: 40px; left: 30px; right: 30px; bottom: 112px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 .pmenu button { background: rgba(255, 255, 255, 0.92); color: #111; padding: 9px; border: none; white-space: normal; }
 .pmenu button:hover { background: #fff !important; color: #111 !important; outline: 2px solid var(--play); }
@@ -271,5 +284,5 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 .keys td { padding: 3px 0; }
 .keys td:nth-child(2) { text-align: right; }
 .keys td:last-child { width: 28px; text-align: right; }
-.key { font-family: Consolas, monospace; font-size: 12px; background: var(--faint); color: var(--text); min-width: 110px; }
+.key { font-family: var(--mono); font-size: 12px; background: var(--faint); color: var(--text); min-width: 110px; }
 .key.rec { background: var(--accent-soft); color: var(--accent); font-family: inherit; }
