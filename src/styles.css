@@ -138,7 +138,8 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .frame {
   width: 100%; height: 100%; border: var(--frame-w, 3px) solid; border-radius: 16px; position: relative;
   border-color: color-mix(in srgb, var(--g) 45%, color-mix(in srgb, var(--text) 22%, var(--bg)));
-  background: color-mix(in srgb, var(--g) calc(var(--label-tint) * var(--box-strength) * 32%), transparent);
+  /* label 색 입히기에 따라 0%~36%. 낮은 값에서는 은은하게, 높이면 또렷하게 */
+  background: color-mix(in srgb, var(--g) calc(var(--label-tint) * var(--label-tint) * 36%), transparent);
 }
 .frame span {
   position: absolute; top: 4px; left: 12px; font-weight: 700; font-size: 11.5px; color: color-mix(in srgb, var(--text) 75%, var(--bg));
@@ -445,4 +446,4 @@ input[type='color'].bc-big { width: 34px; height: 26px; border-radius: 8px; }
 input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 .bc-hex { width: 96px; font-family: var(--mono); }
 /* 상자에 직접 고른 색은 Apple 컬러풀에서도 그 색 그대로 쓴다 */
-[data-look='apple-color'] .box.own-color { --gv: var(--g); }
+[data-look='apple-color'] .box.own-color, [data-look='apple-color'] .frame.own-color { --gv: var(--g); }

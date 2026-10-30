@@ -248,9 +248,14 @@ function LineRow({ l, editing, active, cls, rowProps, onFocus, onKey, onText }: 
 
 export function GroupFrame({ data }: NodeProps) {
   const g = useStore((s) => s.project.labels.find((l) => l.id === (data as any).groupId));
+  // label 안 상자를 모두 같은 색으로 칠했으면 label 배경도 그 색을 따른다
+  const shared = useStore((s) => {
+    const cs = s.project.nodes.filter((n) => n.group === (data as any).groupId).map((n) => n.color);
+    return cs.length && cs.every((c) => c && c === cs[0]) ? cs[0] : null;
+  });
   if (!g) return null;
   return (
-    <div className="frame" style={{ '--g': g.color } as React.CSSProperties}>
+    <div className={'frame' + (shared ? ' own-color' : '')} style={{ '--g': shared ?? g.color } as React.CSSProperties}>
       <span title="클릭: 이 label의 상자 모두 선택">
         {g.title ? `${g.title} · ` : ''}
         <code>{g.name}</code>
