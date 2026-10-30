@@ -1,7 +1,7 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, resetPrefs, usePrefs, type ActionId, type Colors } from './prefs';
+import { ACTIONS, DIMS, FONTS, GRAD_DEFAULTS, THEMES, colorsOf, gradColors, gradOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, resetPrefs, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
 
@@ -18,8 +18,8 @@ export function SettingsModal() {
         <div className="row end">
           <button
             className="danger"
-            title="화면 색, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로. 대본과 상자 색은 그대로예요"
-            onClick={() => confirm('화면 색, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로 되돌릴까요?\n대본과 상자 색은 그대로예요.') && (resetPrefs(), useStore.getState().say('설정을 처음 값으로 되돌렸어요'))}
+            title="화면 테마, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로. 대본과 상자 색은 그대로예요"
+            onClick={() => confirm('화면 테마, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로 되돌릴까요?\n대본과 상자 색은 그대로예요.') && (resetPrefs(), useStore.getState().say('설정을 처음 값으로 되돌렸어요'))}
           >
             모든 설정을 처음 값으로
           </button>
@@ -34,46 +34,66 @@ export function SettingsModal() {
 function ColorPrefs() {
   const p = usePrefs();
   const cur = colorsOf(p);
-  const setCustom = (k: keyof Colors, v: string) => usePrefs.setState({ theme: 'custom', custom: { ...cur, [k]: v } });
-  const pickers: [keyof Colors, string][] = [['bg', '바탕'], ['panel', '면'], ['text', '글자'], ['accent', '강조']];
+  const grad = gradOf(p);
+  const setCustom = (k: keyof Colors, v: string) => usePrefs.setState({ custom: { ...p.custom, [k]: v } });
+  const setGrad = (k: 'a' | 'b', v: string) => grad && usePrefs.setState({ grads: { ...p.grads, [grad]: { ...p.grads[grad], [k]: v } } });
+  const pickers: [keyof Colors, string][] = [['bg', '바탕'], ['panel', '면'], ['box', '상자'], ['text', '텍스트']];
+  const preview = (c: Colors) => ({ background: c.bg, color: c.text, borderColor: c.box ?? c.accent });
   return (
     <>
-      <h4>화면 색</h4>
+      <h4>화면 테마</h4>
       <div className="row">
-        {THEMES.map((t) => (
-          <button key={t.id} className={'swatch' + (p.theme === t.id ? ' on' : '')} onClick={() => usePrefs.setState({ theme: t.id })} style={{ background: t.colors.bg, color: t.colors.text, borderColor: t.colors.accent }}>
-            {t.label}
-          </button>
-        ))}
-        <button className={'swatch' + (p.theme === 'custom' ? ' on' : '')} onClick={() => usePrefs.setState({ theme: 'custom', custom: { ...cur } })}>
+        {THEMES.map((t) => {
+          const c = t.grad ? gradColors(p.grads[t.grad]) : t.colors;
+          return (
+            <button key={t.id} className={'swatch' + (p.theme === t.id ? ' on' : '')} onClick={() => usePrefs.setState({ theme: t.id })} style={preview(c)}>
+              {t.label}
+            </button>
+          );
+        })}
+        <button
+          className={'swatch' + (p.theme === 'custom' ? ' on' : '')}
+          onClick={() => usePrefs.setState({ theme: 'custom', custom: p.theme === 'custom' ? p.custom : { ...cur, box: cur.box ?? cur.panel, label: undefined } })}
+        >
           직접 고르기
         </button>
       </div>
-      <div className="row">
-        {pickers.map(([k, label]) => (
-          <label key={k} className="pick">
-            <input type="color" value={cur[k]} onChange={(e) => setCustom(k, e.target.value)} />
-            {label}
-          </label>
-        ))}
-      </div>
-      <p className="tip">색을 바꾸면 "직접 고르기"로 저장돼요. label 상자 색은 왼쪽 label 목록에서 바꿔요.</p>
-      <div className="row">
-        <label className="pick" htmlFor="box-strength">상자 진하기</label>
-        <input id="box-strength" type="range" min={0} max={100} step={5} value={p.boxStrength} onChange={(e) => usePrefs.setState({ boxStrength: +e.target.value })} />
-        <span className="tip">{p.boxStrength}%</span>
-      </div>
-      <div className="row">
-        <label className="pick" htmlFor="label-tint">상자에 label 색</label>
-        <input id="label-tint" type="range" min={0} max={100} step={5} value={p.labelTint} onChange={(e) => usePrefs.setState({ labelTint: +e.target.value })} />
-        <span className="tip">{p.labelTint}%</span>
-      </div>
+      {grad && (
+        <>
+          <div className="row">
+            <label className="pick">
+              <input type="color" value={p.grads[grad].a} onChange={(e) => setGrad('a', e.target.value)} />
+              바탕 색
+            </label>
+            <span className="grad-bar" style={{ background: `linear-gradient(90deg, ${p.grads[grad].a}, ${p.grads[grad].b})` }}>
+              <i style={{ left: '30%' }} title="label 배경" />
+              <i style={{ left: '55%' }} title="상자" />
+            </span>
+            <label className="pick">
+              <input type="color" value={p.grads[grad].b} onChange={(e) => setGrad('b', e.target.value)} />
+              끝 색
+            </label>
+            <button onClick={() => usePrefs.setState({ grads: { ...p.grads, [grad]: { ...GRAD_DEFAULTS[grad] } } })}>처음 색</button>
+          </div>
+          <p className="tip">두 색 사이를 이어서 바탕 → label 배경(30%) → 상자(55%) 순서로 자동으로 칠해요. 글자색도 밝기에 맞춰 정해져요.</p>
+        </>
+      )}
+      {p.theme === 'custom' && (
+        <div className="row">
+          {pickers.map(([k, label]) => (
+            <label key={k} className="pick">
+              <input type="color" value={p.custom[k] ?? p.custom.panel} onChange={(e) => setCustom(k, e.target.value)} />
+              {label}
+            </label>
+          ))}
+        </div>
+      )}
       <div className="row">
         <label className="pick" htmlFor="frame-w">label 경계선</label>
-        <input id="frame-w" type="range" min={1} max={6} step={0.5} value={p.frameWidth} onChange={(e) => usePrefs.setState({ frameWidth: +e.target.value })} />
-        <span className="tip">{p.frameWidth}px</span>
+        <input id="frame-w" type="range" min={0} max={6} step={0.5} value={p.frameWidth} onChange={(e) => usePrefs.setState({ frameWidth: +e.target.value })} />
+        <span className="tip">{p.frameWidth ? p.frameWidth + 'px' : '안 보임'}</span>
       </div>
-      <p className="tip">상자 진하기는 상자와 이름표를 얼마나 진하게 칠할지, 상자에 label 색은 상자에 label 색을 얼마나 섞을지(높이면 label별로 구분하기 쉬워요), label 경계선은 같은 label 상자를 묶는 선의 굵기예요(사과 스타일은 선 없이 색으로만 구분해요). label 배경은 왼쪽 label 목록에서 고른 색 그대로예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않아서 상자 진하기를 쓰지 않아요(경계선 굵기는 써요).</p>
+      <p className="tip">label 경계선은 같은 label 상자를 묶는 선의 굵기예요. 0이면 선이 안 보여요. 사과 스타일은 label 배경을 왼쪽 label 목록의 색으로 칠해요.</p>
     </>
   );
 }

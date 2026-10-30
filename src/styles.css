@@ -445,18 +445,28 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 /* 상자에 직접 고른 색은 사과 컬러풀에서도 그 색 그대로 쓴다 */
 [data-look='apple-color'] .box.own-color { --gv: var(--g); }
 
-/* 설정에서 칠한 상자: 고른 색 그대로. 글자와 흐린 글자, 선은 그 색 위에서 읽히게 다시 맞춘다
-   (옆에 붙는 단추·창은 상자 안에 있지만 원래 색을 쓰도록 상자 머리/줄/다음 흐름에만 건다) */
-:root:not([data-mono='1']) .react-flow .box.own-color { background: var(--g); border-color: color-mix(in srgb, var(--g) 80%, #000); }
-:root:not([data-mono='1']) .box.own-color :is(.box-head, .box-lines > .pl, .box-exit, .more) {
-  --text: var(--bt); --panel: var(--g);
-  --muted: color-mix(in srgb, var(--bt) 62%, var(--g));
-  --line: color-mix(in srgb, var(--bt) 22%, var(--g));
+/* 상자를 한 가지 색(--fill-c)으로 칠하는 두 경우: 그라데이션·직접 고르기 테마([data-boxfill]), 설정에서 칠한 상자(.own-color, 더 우선).
+   글자와 흐린 글자, 선은 그 색 위에서 읽히게 다시 맞춘다 (옆에 붙는 단추·창은 원래 색을 쓰도록 상자 머리/줄/다음 흐름에만) */
+:root[data-boxfill='1'] .box { --fill-c: var(--theme-box); --bt: var(--theme-box-text); }
+:root:not([data-mono='1']) .box.own-color { --fill-c: var(--g); }
+:root:not([data-mono='1']) .react-flow :is(.box.own-color, [data-boxfill='1'] .box) {
+  background: var(--fill-c); border-color: color-mix(in srgb, var(--fill-c) 82%, var(--bt));
+}
+:root:not([data-mono='1']) :is(.box.own-color, [data-boxfill='1'] .box) :is(.box-head, .box-lines > .pl, .box-exit, .more) {
+  --text: var(--bt); --panel: var(--fill-c);
+  --muted: color-mix(in srgb, var(--bt) 62%, var(--fill-c));
+  --line: color-mix(in srgb, var(--bt) 22%, var(--fill-c));
   --faint: color-mix(in srgb, var(--bt) 8%, transparent); --hover: color-mix(in srgb, var(--bt) 10%, transparent);
   --t-stage: color-mix(in srgb, var(--bt) 12%, transparent); --ok-text: var(--bt);
   color: var(--bt);
 }
-:root:not([data-mono='1']) .box.own-color .box-lines { background: transparent; }
-:root:not([data-mono='1']) .box.own-color .badge { background: color-mix(in srgb, var(--bt) 14%, transparent); color: var(--bt); }
-:root:not([data-mono='1']) .box.own-color .choice { background: color-mix(in srgb, var(--bt) 10%, transparent); border-color: color-mix(in srgb, var(--bt) 25%, transparent); color: var(--bt); }
+:root:not([data-mono='1']) :is(.box.own-color, [data-boxfill='1'] .box) .box-lines { background: transparent; }
+:root:not([data-mono='1']) :is(.box.own-color, [data-boxfill='1'] .box) .badge { background: color-mix(in srgb, var(--bt) 14%, transparent); color: var(--bt); }
+:root:not([data-mono='1']) :is(.box.own-color, [data-boxfill='1'] .box) .choice { background: color-mix(in srgb, var(--bt) 10%, transparent); border-color: color-mix(in srgb, var(--bt) 25%, transparent); color: var(--bt); }
+/* 그라데이션·직접 고르기 테마의 label 배경 */
+:root[data-labelfill='1'] .frame { background: var(--theme-label); border-color: color-mix(in srgb, var(--theme-label) 70%, var(--theme-label-text)); }
+:root[data-labelfill='1'] .frame span { color: var(--theme-label-text); }
 .row.end .sp { flex: 1; }
+/* 설정의 그라데이션 미리보기: label 배경(30%)과 상자(55%) 자리에 눈금 */
+.grad-bar { position: relative; flex: 1; min-width: 120px; height: 14px; border-radius: 7px; border: 1px solid var(--line); }
+.grad-bar i { position: absolute; top: -4px; width: 2px; height: 20px; margin-left: -1px; border-radius: 1px; background: var(--text); }

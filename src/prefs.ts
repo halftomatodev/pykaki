@@ -22,21 +22,51 @@ export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
   { id: 'play', label: '처음부터 플레이', def: 'Alt+KeyP' },
 ];
 
-export interface Colors { bg: string; panel: string; text: string; accent: string }
-export type ThemeId = 'light' | 'paper' | 'dark' | 'onebit' | 'onebit-light' | 'apple' | 'apple-color' | 'custom';
+// box·label은 그라데이션 테마와 직접 고르기에서만: 상자와 label 배경을 이 색으로 칠한다
+export interface Colors { bg: string; panel: string; text: string; accent: string; box?: string; label?: string }
+export type ThemeId = 'apple' | 'apple-color' | 'light' | 'dark' | 'onebit' | 'onebit-light' | 'custom';
+export interface Grad { a: string; b: string } // a: 바탕 쪽 색, b: 끝 색
+export type GradId = 'light' | 'dark';
 
-// mono: 1비트 테마. 칠하지 않고 모두 같은 바탕에 글자색 선만 긋는다
 // look: 사과 스타일(Apple 디자인 참고, 처음 값). 경계선 없이 둥근 카드와 바탕색 차이로만 구분한다 (apple-color는 label 색을 진하게)
+// grad: 그라데이션 테마. 두 색 사이에서 바탕 → label 배경 → 상자 순서로 색을 정한다
+// mono: 1비트 테마. 칠하지 않고 모두 같은 바탕에 글자색 선만 긋는다
 export type Look = 'apple' | 'apple-color';
-export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean; look?: Look }[] = [
-  { id: 'light', label: '밝게', colors: { bg: '#f5f5f3', panel: '#fcfcfb', text: '#33343a', accent: '#6b7bd6' } },
-  { id: 'paper', label: '종이', colors: { bg: '#efebe2', panel: '#f8f5ee', text: '#3d3832', accent: '#a26b45' } },
-  { id: 'dark', label: '어둡게', colors: { bg: '#1d1e22', panel: '#25272c', text: '#cfd0d4', accent: '#8f9cf0' } },
-  { id: 'onebit', label: '1비트', colors: { bg: '#000000', panel: '#000000', text: '#ffffff', accent: '#ffffff' }, mono: true },
-  { id: 'onebit-light', label: '1비트 흰 바탕', colors: { bg: '#ffffff', panel: '#ffffff', text: '#000000', accent: '#000000' }, mono: true },
+export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean; look?: Look; grad?: GradId }[] = [
   { id: 'apple', label: '사과 스타일', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple' },
   { id: 'apple-color', label: '사과 컬러풀', colors: { bg: '#f2f2f7', panel: '#ffffff', text: '#1c1c1e', accent: '#007aff' }, look: 'apple-color' },
+  { id: 'light', label: '밝게', colors: { bg: '#ffffff', panel: '#f8f8f8', text: '#1c1c1e', accent: '#58585d' }, grad: 'light' },
+  { id: 'dark', label: '어둡게', colors: { bg: '#000000', panel: '#0b0714', text: '#ececf1', accent: '#a684f8' }, grad: 'dark' },
+  { id: 'onebit', label: '1비트', colors: { bg: '#000000', panel: '#000000', text: '#ffffff', accent: '#ffffff' }, mono: true },
+  { id: 'onebit-light', label: '1비트 흰 바탕', colors: { bg: '#ffffff', panel: '#ffffff', text: '#000000', accent: '#000000' }, mono: true },
 ];
+export const GRAD_DEFAULTS: Record<GradId, Grad> = { light: { a: '#ffffff', b: '#8e8e93' }, dark: { a: '#000000', b: '#8b5cf6' } };
+
+// 두 색 섞기 (t=0이면 a, 1이면 b)
+export function mixHex(a: string, b: string, t: number) {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+const lum = (h: string) => {
+  const n = parseInt(h.slice(1), 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255);
+};
+// 그 색 위에 쓸 글자색
+export const textOn = (h: string) => (lum(h) < 140 ? '#ececf1' : '#1c1c1e');
+
+// 그라데이션: 바탕 0%, 옆 패널 8%, label 배경 30%, 상자 55%
+export function gradColors(g: Grad): Colors {
+  const dark = lum(g.a) < 128;
+  return {
+    bg: g.a,
+    panel: mixHex(g.a, g.b, 0.08),
+    text: textOn(g.a),
+    accent: dark ? mixHex(g.b, '#ffffff', 0.3) : mixHex(g.b, '#000000', 0.4),
+    label: mixHex(g.a, g.b, 0.3),
+    box: mixHex(g.a, g.b, 0.55),
+  };
+}
 
 
 export type FontId = 'default' | 'pretendard-500' | 'pretendard-600' | 'neodgm';
@@ -65,9 +95,8 @@ interface Prefs {
   keys: Record<ActionId, string>;
   font: FontId;
   dim: DimId;
-  boxStrength: number; // 상자·label 배경·이름표를 얼마나 진하게 칠할지 (0~100)
-  frameWidth: number; // label 경계선 굵기 (px)
-  labelTint: number; // 상자와 label 배경에 label 색을 얼마나 입힐지 (0~100)
+  frameWidth: number; // label 경계선 굵기 (px, 0이면 안 보임)
+  grads: Record<GradId, Grad>; // 밝게/어둡게 테마의 두 색
 }
 
 const KEY = 'pykaki-prefs';
@@ -75,15 +104,15 @@ const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as R
 
 // 처음 값
 const defaults = (): Prefs => ({
-  theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors }, keys: defKeys(),
-  font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50,
+  theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors, box: '#ffffff' }, keys: defKeys(),
+  font: 'default', dim: 'mid', frameWidth: 3, grads: structuredClone(GRAD_DEFAULTS),
 });
 
 function loadPrefs(): Prefs {
   const d = defaults();
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
-    if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
+    if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys }, grads: { light: { ...d.grads.light, ...raw.grads?.light }, dark: { ...d.grads.dark, ...raw.grads?.dark } } };
   } catch {
     // 저장소를 못 쓰는 브라우저면 기본값으로
   }
@@ -95,7 +124,12 @@ export const resetKeys = () => usePrefs.setState({ keys: defKeys() });
 export const resetPrefs = () => usePrefs.setState(defaults());
 
 const themeOf = (p: Prefs) => THEMES.find((t) => t.id === p.theme) ?? THEMES[0];
-export const colorsOf = (p: Prefs) => (p.theme === 'custom' ? p.custom : themeOf(p).colors);
+export const colorsOf = (p: Prefs): Colors => {
+  if (p.theme === 'custom') return p.custom;
+  const t = themeOf(p);
+  return t.grad ? gradColors(p.grads[t.grad]) : t.colors;
+};
+export const gradOf = (p: Prefs) => (p.theme === 'custom' ? undefined : themeOf(p).grad);
 export const isMono = (p: Prefs) => p.theme !== 'custom' && !!themeOf(p).mono;
 export const lookOf = (p: Prefs) => (p.theme === 'custom' ? undefined : themeOf(p).look);
 
@@ -114,10 +148,15 @@ function apply(p: Prefs) {
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
   r.dataset.mono = isMono(p) ? '1' : '';
-  r.style.setProperty('--frame-w', Math.min(6, Math.max(1, p.frameWidth)) + 'px');
+  r.style.setProperty('--frame-w', Math.min(6, Math.max(0, p.frameWidth)) + 'px');
   r.dataset.look = lookOf(p) ?? '';
-  r.style.setProperty('--label-tint', String(Math.min(100, Math.max(0, p.labelTint)) / 100));
-  r.style.setProperty('--box-strength', String(Math.min(100, Math.max(0, p.boxStrength)) / 100));
+  // 그라데이션·직접 고르기 테마: 상자와 label 배경을 테마 색으로 칠한다
+  const fill = (name: string, v?: string) => {
+    r.dataset[name + 'fill'] = v ? '1' : '';
+    if (v) (r.style.setProperty(`--theme-${name}`, v), r.style.setProperty(`--theme-${name}-text`, textOn(v)));
+  };
+  fill('box', isMono(p) ? undefined : c.box);
+  fill('label', isMono(p) ? undefined : c.label);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
   r.style.setProperty('--font', f.family);
