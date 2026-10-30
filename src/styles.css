@@ -134,15 +134,14 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .react-flow__controls:hover, .react-flow__minimap:hover { opacity: 1; }
 .react-flow__controls-button { background: var(--panel); border-color: var(--line); fill: var(--muted); }
 .react-flow__attribution { background: transparent; opacity: 0.4; }
-/* label 경계: 색은 옅게 두고 굵기로 보이게 한다. 선 색 = label 색과 흐린 글자색을 섞은 것 */
 .frame {
   width: 100%; height: 100%; border: var(--frame-w, 3px) solid; border-radius: 16px; position: relative;
-  border-color: color-mix(in srgb, var(--g) 45%, color-mix(in srgb, var(--text) 22%, var(--bg)));
-  /* label 색 입히기에 따라 0%~36%. 낮은 값에서는 은은하게, 높이면 또렷하게 */
-  background: color-mix(in srgb, var(--g) calc(var(--label-tint) * var(--label-tint) * 36%), transparent);
+  /* label 배경은 label 색 그대로. 테두리는 같은 색을 조금 어둡게 */
+  background: var(--g);
+  border-color: color-mix(in srgb, var(--g) 80%, #000);
 }
 .frame span {
-  position: absolute; top: 4px; left: 12px; font-weight: 700; font-size: 11.5px; color: color-mix(in srgb, var(--text) 75%, var(--bg));
+  position: absolute; top: 4px; left: 12px; font-weight: 700; font-size: 11.5px; color: var(--gt);
   pointer-events: auto; cursor: pointer;
 }
 .frame code { padding: 0 4px; border-radius: 3px; }
@@ -401,8 +400,8 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 [data-look^='apple'] .box.sel { outline: 2.5px solid var(--accent); outline-offset: 1px; }
 [data-look^='apple'] .box.editing { box-shadow: 0 6px 28px rgba(0, 0, 0, 0.1); }
 [data-look^='apple'] .box-lines { background: transparent; }
-[data-look^='apple'] .frame { border: none; border-radius: 24px; background: color-mix(in srgb, var(--g) calc(var(--label-tint) * 30%), var(--fill-2)); }
-[data-look^='apple'] .frame span { color: var(--muted); font-weight: 600; }
+[data-look^='apple'] .frame { border: none; border-radius: 24px; }
+[data-look^='apple'] .frame span { font-weight: 600; }
 [data-look^='apple'] .frame code { background: transparent; }
 [data-look^='apple'] .choice { border: none; border-radius: 10px; background: var(--fill-2); }
 [data-look^='apple'] .badge { border-radius: 6px; background: var(--fill); color: var(--muted); }
@@ -428,15 +427,13 @@ input[type='range'] { flex: 1; padding: 0; background: transparent; border: none
 [data-look^='apple'] pre.rpy { border-radius: 12px; }
 
 /* Apple 컬러풀: label 색의 색상(hue)만 따서 Apple 시스템 색처럼 또렷한 색으로 칠한다 */
-[data-look='apple-color'] .box, [data-look='apple-color'] .frame { --gv: var(--g); }
+[data-look='apple-color'] .box { --gv: var(--g); }
 [data-look='apple-color'] .pl .who { --cv: var(--c); }
 @supports (color: oklch(from red l c h)) {
-  [data-look='apple-color'] .box, [data-look='apple-color'] .frame { --gv: oklch(from var(--g) 0.7 0.16 h); }
+  [data-look='apple-color'] .box { --gv: oklch(from var(--g) 0.7 0.16 h); }
   [data-look='apple-color'] .pl .who { --cv: oklch(from var(--c) 0.63 0.17 h); }
 }
 [data-look='apple-color'] .box { background: color-mix(in srgb, var(--gv) calc(var(--label-tint) * 40%), var(--panel)); }
-[data-look='apple-color'] .frame { background: color-mix(in srgb, var(--gv) calc(var(--label-tint) * 36%), transparent); }
-[data-look='apple-color'] .frame span { color: color-mix(in srgb, var(--gv) 70%, #000); }
 [data-look='apple-color'] .pl .who { background: var(--cv); color: #fff; }
 [data-look='apple-color'] .choice { background: rgba(255, 255, 255, 0.7); color: var(--accent); font-weight: 600; }
 .row > label.pick[for] { width: 96px; flex-shrink: 0; }
@@ -446,4 +443,4 @@ input[type='color'].bc-big { width: 34px; height: 26px; border-radius: 8px; }
 input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 .bc-hex { width: 96px; font-family: var(--mono); }
 /* 상자에 직접 고른 색은 Apple 컬러풀에서도 그 색 그대로 쓴다 */
-[data-look='apple-color'] .box.own-color, [data-look='apple-color'] .frame.own-color { --gv: var(--g); }
+[data-look='apple-color'] .box.own-color { --gv: var(--g); }

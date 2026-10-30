@@ -32,3 +32,11 @@ export function hexAlpha(hex: string, a: number) {
 export const timeStr = (t: number) =>
   new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
+
+// 색이 밝은지 (그 위에 검은 글자를 쓸지)
+export function isLight(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return true;
+  const n = parseInt(m[1], 16);
+  return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 150;
+}
