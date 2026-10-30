@@ -54,7 +54,12 @@ function ColorPrefs() {
         <input id="box-strength" type="range" min={0} max={100} step={5} value={p.boxStrength} onChange={(e) => usePrefs.setState({ boxStrength: +e.target.value })} />
         <span className="tip">{p.boxStrength}%</span>
       </div>
-      <p className="tip">상자, label 배경, 이름표를 얼마나 진하게 칠할지예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않고 선만 그려서 이 값을 쓰지 않아요.</p>
+      <div className="row">
+        <label className="pick" htmlFor="frame-w">label 경계선</label>
+        <input id="frame-w" type="range" min={1} max={6} step={0.5} value={p.frameWidth} onChange={(e) => usePrefs.setState({ frameWidth: +e.target.value })} />
+        <span className="tip">{p.frameWidth}px</span>
+      </div>
+      <p className="tip">상자 진하기는 상자, label 배경, 이름표를 얼마나 진하게 칠할지, label 경계선은 같은 label 상자를 묶는 선의 굵기예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않아서 상자 진하기를 쓰지 않아요(경계선 굵기는 써요).</p>
     </>
   );
 }

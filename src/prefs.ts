@@ -52,13 +52,14 @@ interface Prefs {
   font: FontId;
   dim: DimId;
   boxStrength: number; // 상자·label 배경·이름표를 얼마나 진하게 칠할지 (0~100)
+  frameWidth: number; // label 경계선 굵기 (px)
 }
 
 const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30 };
+  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3 };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
@@ -90,6 +91,7 @@ function apply(p: Prefs) {
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
   r.dataset.mono = isMono(p) ? '1' : '';
+  r.style.setProperty('--frame-w', Math.min(6, Math.max(1, p.frameWidth)) + 'px');
   r.style.setProperty('--box-strength', String(Math.min(100, Math.max(0, p.boxStrength)) / 100));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
