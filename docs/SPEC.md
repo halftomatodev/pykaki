@@ -180,7 +180,7 @@
 
 ## 9-1. 웹앱 설치 (PWA)
 
-- `public/`의 `manifest.webmanifest`, `sw.js`, 아이콘(`icon.svg`와 PNG 192/512/마스크용 512)이 빌드 때 `dist/`로 그대로 복사된다. 경로는 모두 상대 경로라 GitHub Pages의 `/pykaki/` 아래에서 동작한다.
+- `public/`의 `manifest.webmanifest`, `sw.js`, 아이콘(Ren'Py 런처 아이콘을 보라색 모노톤으로 바꾼 PNG 32/192/512/마스크용 512, `licenses/RENPY-ICON.txt`)이 빌드 때 `dist/`로 그대로 복사된다. 경로는 모두 상대 경로라 GitHub Pages의 `/pykaki/` 아래에서 동작한다.
 - 서비스 워커는 **네트워크 먼저**: 인터넷이 되면 늘 새로 받아 캐시에 넣고, 안 되면 캐시로 연다. 그래서 `main`에 올린 업데이트가 설치한 앱에도 바로 반영된다.
 - 등록은 `src/pwa.ts`에서 http/https일 때만 한다(파일로 연 `dist/index.html`에서는 하지 않음). `beforeinstallprompt`를 잡아 두었다가 툴바 [앱 설치]로 띄운다.
 - `theme-color`는 화면 색 설정의 바탕색을 따른다.

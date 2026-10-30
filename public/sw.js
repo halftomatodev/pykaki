@@ -1,7 +1,7 @@
 // PyKaki 웹앱 설치용 서비스 워커.
 // 인터넷이 되면 늘 새 파일을 받아서(업데이트가 바로 반영되게) 저장해 두고, 안 되면 저장해 둔 파일로 연다.
-const CACHE = 'pykaki-v1';
-const SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon.svg'];
+const CACHE = 'pykaki-v2';
+const SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png', './favicon-32.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

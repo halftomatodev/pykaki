@@ -41,4 +41,6 @@ npm run build    # dist/index.html 한 파일로 빌드
 [MIT](LICENSE) © halftomato
 누구나 자유롭게 쓰고, 고치고, 다시 배포할 수 있어요. 저작권 표시와 라이선스 문구만 남겨 주세요.
 
+PyKaki는 Ren'Py의 공식 도구가 아니에요. 아이콘은 Ren'Py 런처 아이콘(MIT)을 보라색으로 바꾼 것이에요 ([안내](licenses/RENPY-ICON.txt)).
+
 함께 들어 있는 글꼴 **Neo둥근모**(Dalgona, 원작 김중태)는 [SIL Open Font License 1.1](licenses/OFL-NeoDunggeunmo.txt)을 따라요.
