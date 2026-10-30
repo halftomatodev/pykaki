@@ -14,7 +14,7 @@ export function RightPanel() {
   const setTab = (t: Tab) => useStore.setState({ tab: t });
 
   return (
-    <div className="right">
+    <div className="right-panel">
       <div className="tabs">
         <button className={tab === 'edit' ? 'on' : ''} onClick={() => setTab('edit')}>편집</button>
         <button className={tab === 'play' ? 'on' : ''} onClick={() => setTab('play')}>플레이{playing && ' ●'}</button>

@@ -82,7 +82,7 @@ code { font-family: var(--mono); }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 6px); } }
 
 /* 집중 모드: 캔버스만 남긴다 */
-.app.focus .toolbar, .app.focus .sidebar, .app.focus .right,
+.app.focus .toolbar, .app.focus .sidebar, .app.focus .right-panel,
 .app.focus .canvas-hint, .app.focus .react-flow__minimap, .app.focus .react-flow__controls,
 .app.focus .react-flow__attribution { display: none; }
 .app.focus .react-flow__background { opacity: 0.35; }
@@ -216,7 +216,7 @@ input.box-title.ed { flex: 1; min-width: 0; }
 .react-flow__arrowhead polyline { stroke: color-mix(in srgb, var(--text) 30%, var(--bg)); fill: color-mix(in srgb, var(--text) 30%, var(--bg)); }
 
 /* 오른쪽 */
-.right { width: 400px; display: flex; flex-direction: column; background: var(--panel); border-left: 1px solid var(--line); min-height: 0; flex-shrink: 0; }
+.right-panel { width: 400px; display: flex; flex-direction: column; background: var(--panel); border-left: 1px solid var(--line); min-height: 0; flex-shrink: 0; }
 .tabs { display: flex; padding: 0 6px; }
 .tabs button { border-radius: 0; padding: 9px 12px; background: none; border-bottom: 2px solid transparent; }
 .tabs button:hover:not(:disabled) { background: none; }
@@ -331,7 +331,7 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 [data-mono='1'] .swatch { border-radius: 0; }
 [data-mono='1'] :is(select, input, textarea) { background: transparent; border-radius: 0; }
 [data-mono='1'] :is(input, textarea, select):focus { border-color: var(--text); }
-[data-mono='1'] .toolbar, [data-mono='1'] .sidebar, [data-mono='1'] .right { background: var(--bg); }
+[data-mono='1'] .toolbar, [data-mono='1'] .sidebar, [data-mono='1'] .right-panel { background: var(--bg); }
 [data-mono='1'] .react-flow__edge-path, [data-mono='1'] .react-flow__edge.cross .react-flow__edge-path,
 [data-mono='1'] .react-flow__edge.k-call .react-flow__edge-path { stroke: var(--text); }
 [data-mono='1'] .react-flow__edge-text { fill: var(--text); }
