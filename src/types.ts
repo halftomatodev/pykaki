@@ -39,6 +39,7 @@ export type ExitType = Exit['type'];
 export interface BoxNode {
   id: string;
   group: string; // LabelGroup.id
+  color?: string; // 상자 색. 없으면 label 색을 따른다
   title: string;
   pos: { x: number; y: number };
   lines: Line[];

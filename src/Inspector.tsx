@@ -3,7 +3,7 @@ import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, ExitType, Line, Project } from './types';
 import { uid } from './util';
-import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { BoxColorPicker, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage } from './stage';
 import { hit, keyOf, usePrefs } from './prefs';
 
@@ -110,6 +110,11 @@ function BoxInspector({ b }: { b: BoxNode }) {
         {project.project.startNode !== b.id && <button onClick={() => update((p) => void (p.project.startNode = b.id))}>시작 상자로</button>}
         <button onClick={() => useStore.getState().startPlay(b.id)}>▶ 여기서 플레이</button>
         <button className="danger" onClick={() => (update((p) => ops.deleteBoxes(p, [b.id])), useStore.getState().select([]))}>삭제</button>
+      </div>
+
+      <div className="row">
+        <label>상자 색</label>
+        <BoxColorPicker value={b.color} onChange={(c) => upd((x) => void (c ? (x.color = c) : delete x.color))} />
       </div>
 
       <h4>대사</h4>

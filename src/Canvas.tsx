@@ -227,7 +227,7 @@ export function Canvas() {
         <MiniMap
           pannable
           zoomable
-          nodeColor={(n) => (n.type === 'frame' ? 'transparent' : mono ? mono.bg : project.labels.find((g) => g.id === ops.findBox(project, n.id)?.group)?.color ?? '#ddd')}
+          nodeColor={(n) => (n.type === 'frame' ? 'transparent' : mono ? mono.bg : ops.findBox(project, n.id)?.color ?? project.labels.find((g) => g.id === ops.findBox(project, n.id)?.group)?.color ?? '#ddd')}
           nodeStrokeColor={(n) => (mono && n.type !== 'frame' ? mono.text : 'transparent')}
           nodeStrokeWidth={mono ? 3 : 1}
           maskColor="color-mix(in srgb, var(--bg) 70%, transparent)"

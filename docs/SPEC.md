@@ -50,7 +50,7 @@
   "layout": { "direction": "TB" },          // TB | LR
   "settings": { "escapeBrackets": true, "allowTextTags": true, "escapePercent": false },
   "nodes": [{
-    "id": "n1", "group": "g1", "title": "도입", "pos": { "x": 0, "y": 0 },
+    "id": "n1", "group": "g1", "title": "도입", "pos": { "x": 0, "y": 0 }, "color": "#ff9500", // color는 없어도 됨
     "lines": [
       { "id": "l1", "type": "narration", "text": "비가 내렸다." },
       { "id": "l2", "type": "say", "who": "a", "attr": "smile", "text": "우산 있어?" },
@@ -64,7 +64,7 @@
 }
 ```
 
-- **상자(node)**: 대사 묶음 하나. 반드시 label 그룹 하나(`group`)에 속한다.
+- **상자(node)**: 대사 묶음 하나. 반드시 label 그룹 하나(`group`)에 속한다. `color`(선택)는 상자 색으로, 없으면 label 색을 따른다. `.rpy`에는 영향이 없다.
 - **label 그룹**: 렌파이 `label` 하나. 상자 여러 개를 묶는다. `entry`가 그 label의 첫 상자다.
 - **줄(line) 종류**: `narration`(내레이션), `say`(캐릭터 대사, `who`=캐릭터 id, `attr`=표정 등), 연출 줄 5가지, `command`(렌파이 명령 그대로), `note`(주석).
 - **연출 줄** (`src/stage.ts`): 명령을 직접 쓰지 않고 칸을 채운다. `text`는 쓰지 않는다.
@@ -169,6 +169,7 @@
 - **label 경계선** (`frameWidth`, 1~6px, 기본 3): CSS `--frame-w`. label 묶음 테두리를 실선으로, 색은 label 색 45%와 흐린 글자색을 섞어 옅게 두고 굵기로 보이게 한다. 1비트에서는 같은 굵기의 점선.
 - **label 색 입히기** (`labelTint`, 0~100, 기본 50): CSS `--label-tint`. 상자에 섞는 label 색 비율 `--box-mix`(밝은 테마 ×110%, 최대 100%, 어두운 테마 ×40%)와 label 배경 색에 곱한다.
 - **Apple 스타일 테마** (`apple`, `apple-color`): `data-look`. 바탕 #f2f2f7, 면 흰색, 강조 #007aff, 회색 #8e8e93. 상자·label 배경·선택지·입력칸의 테두리를 없애고 둥근 모서리(상자 16px, label 24px)와 옅은 그림자, Apple 회색 채움(rgba(118,118,128,.08~.12))으로만 구분한다. 글꼴이 "기본"이면 시스템 글꼴(-apple-system 등)을 먼저 쓴다. `apple-color`는 label·캐릭터 색의 색상(hue)만 따서 `oklch(from 색 0.7 0.16 h)`로 또렷한 색을 만들어 상자·label 배경에 `--label-tint`만큼 입히고, 이름표는 진한 색에 흰 글자. (relative color를 못 쓰는 브라우저는 원래 label 색)
+- **상자 색**: 상자에 `color`가 있으면 `--g`에 label 색 대신 그 색을 넘기고 `.own-color`를 붙인다. Apple 컬러풀은 이때 색상만 따는 보정 없이 그 색을 그대로 쓴다. 고르는 곳은 편집 중 오른쪽 카드와 편집 탭(`BoxColorPicker`, Apple 시스템 색 13가지 + 직접 고르기 + label 색 따르기). 미니맵도 이 색.
 - **1비트 테마** (`onebit` 검정 바탕, `onebit-light` 흰 바탕): `data-mono="1"`. 모든 면을 바탕색으로, 테두리·글자·선·핸들·이름표를 글자색 하나로 그린다(칠하지 않고 외곽선만). 상자 진하기는 쓰지 않는다. 미니맵은 바탕색 상자에 글자색 테두리.
 - **집중 모드 흐림**: 집중 모드이고 편집 중인 상자가 있을 때(`.app.focus:has(.box.editing)`), 편집 상자 안에서 포커스가 없는 줄·제목·선택지는 `--dim-line`, 다른 상자·label 배경·선은 `--dim-box` 불투명도. 흐린 상자는 마우스를 올리면 0.6 이상으로. 단계(끄기/약하게/보통/강하게)별 값은 `prefs.ts`의 `DIMS`.
 - 환경 설정은 대본이 아니라 브라우저에 붙는 설정이라 `localStorage['pykaki-prefs']`에 둔다(못 쓰면 기본값).
