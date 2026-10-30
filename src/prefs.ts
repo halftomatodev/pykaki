@@ -83,6 +83,7 @@ function apply(p: Prefs) {
   r.style.setProperty('--text', c.text);
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
   r.style.setProperty('--font', f.family);
   r.style.setProperty('--mono', f.mono);

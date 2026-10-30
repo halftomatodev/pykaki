@@ -6,12 +6,14 @@ import { snapAdd, snapDelete, snapList, type Snapshot } from './persist';
 import { addBoxCenter, runLayout, toggleFocus } from './actions';
 import { timeStr } from './util';
 import { keyOf } from './prefs';
+import { installApp, useCanInstall } from './pwa';
 
 export function Toolbar() {
   const rf = useReactFlow();
   const s = useStore();
   const [showVersions, setShowVersions] = useState(false);
   const sel = s.selectedIds.length;
+  const canInstall = useCanInstall();
 
   const saveVersion = async () => {
     const memo = prompt('버전 메모 (예: 1장 완성, 엔딩 분기 추가 전)');
@@ -60,6 +62,7 @@ export function Toolbar() {
         {s.dirty && <b className="dirty" title="파일로 저장하지 않은 변경이 있어요"> ●</b>}
         {s.localSavedAt && <> · 자동 저장 {timeStr(s.localSavedAt)}</>}
       </span>
+      {canInstall && <button className="primary" onClick={installApp} title="바탕화면과 작업 표시줄에서 바로 여는 앱으로 설치해요">앱 설치</button>}
       <button onClick={toggleFocus} title={'집중 모드: 캔버스만 남기기 ' + keyOf('focus')}>집중</button>
       <button onClick={() => useStore.setState({ showPrefs: true })} title="화면 색, 단축키">설정</button>
       {showVersions && <Versions onClose={() => setShowVersions(false)} />}
