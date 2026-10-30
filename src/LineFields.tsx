@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { ImageKind, Line } from './types';
-import { BOX_COLORS } from './util';
 import { POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
 
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
@@ -139,17 +138,3 @@ export function useLineDrag(move: (from: number, to: number) => void) {
   return { grip, row, cls };
 }
 
-// 상자 색 고르기. 비우면 label 색을 따른다
-export function BoxColorPicker({ value, onChange }: { value?: string; onChange: (c: string | undefined) => void }) {
-  return (
-    <div className="box-colors">
-      <button className={'bc-swatch none' + (value ? '' : ' on')} title="label 색 따르기" onClick={() => onChange(undefined)}>
-        ⟲
-      </button>
-      {BOX_COLORS.map(([c, name]) => (
-        <button key={c} className={'bc-swatch' + (value === c ? ' on' : '')} title={name} style={{ background: c }} onClick={() => onChange(c)} />
-      ))}
-      <input type="color" title="직접 고르기" value={value ?? '#007aff'} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
-}

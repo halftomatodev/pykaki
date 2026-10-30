@@ -6,7 +6,7 @@ import type { BoxNode, Line } from './types';
 import { uid } from './util';
 import { changeThenFocus, continueInNewBox, goNextBox } from './actions';
 import { ExitEditor, type Upd } from './Inspector';
-import { BoxColorPicker, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage, stageCode } from './stage';
 import { hit, keyOf } from './prefs';
 
@@ -138,8 +138,6 @@ function FlowCard({ b }: { b: BoxNode }) {
 
   return (
     <div className="side side-flow nodrag" style={{ top }} ref={ref}>
-      <div className="side-title">상자 색</div>
-      <BoxColorPicker value={b.color} onChange={(c) => update((p) => void (c ? (ops.findBox(p, b.id)!.color = c) : delete ops.findBox(p, b.id)!.color))} />
       <div className="side-title">다음 흐름</div>
       <ExitEditor b={b} upd={upd} />
       {open.map((l) => (

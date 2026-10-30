@@ -1,6 +1,7 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
+import { BOX_COLORS } from './util';
 import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
@@ -10,9 +11,10 @@ export function SettingsModal() {
     <div className="modal-bg" onClick={close}>
       <div className="modal prefs" onClick={(e) => e.stopPropagation()}>
         <h3>환경 설정</h3>
-        <p className="tip">이 브라우저에만 저장돼요. 대본 파일에는 들어가지 않아요.</p>
+        <p className="tip">화면 설정은 이 브라우저에만 저장돼요. 상자 색만 대본 파일에 저장돼요.</p>
         <ColorPrefs />
         <LookPrefs />
+        <BoxColors />
         <KeyPrefs />
         <div className="row end">
           <button onClick={close}>닫기</button>
@@ -65,6 +67,52 @@ function ColorPrefs() {
         <span className="tip">{p.frameWidth}px</span>
       </div>
       <p className="tip">상자 진하기는 상자, label 배경, 이름표를 얼마나 진하게 칠할지, label 색 입히기는 상자와 label 배경에 label 색을 얼마나 진하게 넣을지(높이면 label별로 구분하기 쉬워요), label 경계선은 같은 label 상자를 묶는 선의 굵기예요(Apple 스타일은 선 없이 색으로만 구분해요). 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않아서 상자 진하기를 쓰지 않아요(경계선 굵기는 써요).</p>
+    </>
+  );
+}
+
+// 상자 색 한꺼번에 바꾸기. 대본 파일에 저장되는 값이라 실행 취소가 된다
+function BoxColors() {
+  const project = useStore((s) => s.project);
+  const sel = useStore((s) => s.selectedIds);
+  const [target, setTarget] = useState(sel.length ? 'sel' : 'all');
+  const [color, setColor] = useState('#007aff');
+  const ids = target === 'all' ? project.nodes.map((n) => n.id) : target === 'sel' ? sel : project.nodes.filter((n) => n.group === target).map((n) => n.id);
+  const paint = (c: string | undefined) => {
+    useStore.getState().update((p) => {
+      for (const n of p.nodes) if (ids.includes(n.id)) c ? (n.color = c) : delete n.color;
+    });
+    useStore.getState().say(c ? `상자 ${ids.length}개를 칠했어요` : `상자 ${ids.length}개를 label 색으로 되돌렸어요`);
+  };
+  return (
+    <>
+      <h4>상자 색 (이 대본에 저장)</h4>
+      <div className="row">
+        <label className="pick" htmlFor="bc-target">바꿀 상자</label>
+        <select id="bc-target" value={target} onChange={(e) => setTarget(e.target.value)}>
+          <option value="all">모든 상자 ({project.nodes.length})</option>
+          <option value="sel" disabled={!sel.length}>선택한 상자 ({sel.length})</option>
+          {project.labels.map((g) => (
+            <option key={g.id} value={g.id}>
+              label: {g.title ? `${g.title} (${g.name})` : g.name} ({project.nodes.filter((n) => n.group === g.id).length})
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="row">
+        <label className="pick" htmlFor="bc-color">색</label>
+        <input id="bc-color" type="color" value={color} onChange={(e) => setColor(e.target.value)} title="아무 색이나 골라요" />
+        <div className="box-colors">
+          {BOX_COLORS.map(([c, name]) => (
+            <button key={c} className={'bc-swatch' + (color === c ? ' on' : '')} title={name} style={{ background: c }} onClick={() => setColor(c)} />
+          ))}
+        </div>
+      </div>
+      <div className="row">
+        <button className="primary" disabled={!ids.length} onClick={() => paint(color)}>칠하기</button>
+        <button disabled={!ids.length} onClick={() => paint(undefined)}>label 색으로 되돌리기</button>
+      </div>
+      <p className="tip">왼쪽 동그라미를 누르면 어떤 색이든 고를 수 있고, 오른쪽은 자주 쓰는 색이에요. 고른 색은 대본 파일에 저장되고 실행 취소(Ctrl+Z)가 돼요.</p>
     </>
   );
 }
