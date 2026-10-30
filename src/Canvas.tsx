@@ -8,7 +8,7 @@ import { BoxView, GroupFrame } from './BoxView';
 import * as ops from './ops';
 import { addBoxAt, editBox } from './actions';
 import { isTyping } from './util';
-import { colorsOf, isDark, usePrefs } from './prefs';
+import { colorsOf, isDark, isMono, usePrefs } from './prefs';
 
 const nodeTypes = { box: BoxView, frame: GroupFrame };
 const FRAME_PAD = 22;
@@ -24,6 +24,7 @@ export function Canvas() {
   const focusMode = useStore((s) => s.focusMode);
   const update = useStore((s) => s.update);
   const dark = usePrefs((p) => isDark(colorsOf(p)));
+  const mono = usePrefs((p) => (isMono(p) ? colorsOf(p) : null));
   const rf = useReactFlow();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selEdge, setSelEdge] = useState<string | null>(null);
@@ -221,8 +222,9 @@ export function Canvas() {
         <MiniMap
           pannable
           zoomable
-          nodeColor={(n) => (n.type === 'frame' ? 'transparent' : project.labels.find((g) => g.id === ops.findBox(project, n.id)?.group)?.color ?? '#ddd')}
-          nodeStrokeColor="transparent"
+          nodeColor={(n) => (n.type === 'frame' ? 'transparent' : mono ? mono.bg : project.labels.find((g) => g.id === ops.findBox(project, n.id)?.group)?.color ?? '#ddd')}
+          nodeStrokeColor={(n) => (mono && n.type !== 'frame' ? mono.text : 'transparent')}
+          nodeStrokeWidth={mono ? 3 : 1}
           maskColor="color-mix(in srgb, var(--bg) 70%, transparent)"
           bgColor="var(--panel)"
         />

@@ -49,6 +49,12 @@ function ColorPrefs() {
         ))}
       </div>
       <p className="tip">색을 바꾸면 "직접 고르기"로 저장돼요. label 상자 색은 왼쪽 label 목록에서 바꿔요.</p>
+      <div className="row">
+        <label className="pick" htmlFor="box-strength">상자 진하기</label>
+        <input id="box-strength" type="range" min={0} max={100} step={5} value={p.boxStrength} onChange={(e) => usePrefs.setState({ boxStrength: +e.target.value })} />
+        <span className="tip">{p.boxStrength}%</span>
+      </div>
+      <p className="tip">상자, label 배경, 이름표를 얼마나 진하게 칠할지예요. 낮출수록 글만 남은 것처럼 보여요. 1비트 테마는 칠하지 않고 선만 그려서 이 값을 쓰지 않아요.</p>
     </>
   );
 }

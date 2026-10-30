@@ -19,12 +19,15 @@ export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
 ];
 
 export interface Colors { bg: string; panel: string; text: string; accent: string }
-export type ThemeId = 'light' | 'paper' | 'dark' | 'custom';
+export type ThemeId = 'light' | 'paper' | 'dark' | 'onebit' | 'onebit-light' | 'custom';
 
-export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors }[] = [
+// mono: 1비트 테마. 칠하지 않고 모두 같은 바탕에 글자색 선만 긋는다
+export const THEMES: { id: Exclude<ThemeId, 'custom'>; label: string; colors: Colors; mono?: boolean }[] = [
   { id: 'light', label: '밝게', colors: { bg: '#f5f5f3', panel: '#fcfcfb', text: '#33343a', accent: '#6b7bd6' } },
   { id: 'paper', label: '종이', colors: { bg: '#efebe2', panel: '#f8f5ee', text: '#3d3832', accent: '#a26b45' } },
   { id: 'dark', label: '어둡게', colors: { bg: '#1d1e22', panel: '#25272c', text: '#cfd0d4', accent: '#8f9cf0' } },
+  { id: 'onebit', label: '1비트', colors: { bg: '#000000', panel: '#000000', text: '#ffffff', accent: '#ffffff' }, mono: true },
+  { id: 'onebit-light', label: '1비트 흰 바탕', colors: { bg: '#ffffff', panel: '#ffffff', text: '#000000', accent: '#000000' }, mono: true },
 ];
 
 export type FontId = 'default' | 'neodgm';
@@ -48,13 +51,14 @@ interface Prefs {
   keys: Record<ActionId, string>;
   font: FontId;
   dim: DimId;
+  boxStrength: number; // 상자·label 배경·이름표를 얼마나 진하게 칠할지 (0~100)
 }
 
 const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid' };
+  const d: Prefs = { theme: 'light', custom: { ...THEMES[0].colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30 };
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
@@ -67,7 +71,9 @@ function loadPrefs(): Prefs {
 export const usePrefs = create<Prefs>(loadPrefs);
 export const resetKeys = () => usePrefs.setState({ keys: defKeys() });
 
-export const colorsOf = (p: Prefs) => (p.theme === 'custom' ? p.custom : THEMES.find((t) => t.id === p.theme)!.colors);
+const themeOf = (p: Prefs) => THEMES.find((t) => t.id === p.theme) ?? THEMES[0];
+export const colorsOf = (p: Prefs) => (p.theme === 'custom' ? p.custom : themeOf(p).colors);
+export const isMono = (p: Prefs) => p.theme !== 'custom' && !!themeOf(p).mono;
 
 // 배경이 어두우면 캔버스(React Flow)도 어두운 모드로
 export function isDark(c: Colors) {
@@ -83,6 +89,8 @@ function apply(p: Prefs) {
   r.style.setProperty('--text', c.text);
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
+  r.dataset.mono = isMono(p) ? '1' : '';
+  r.style.setProperty('--box-strength', String(Math.min(100, Math.max(0, p.boxStrength)) / 100));
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', c.bg);
   const f = FONTS.find((x) => x.id === p.font) ?? FONTS[0];
   r.style.setProperty('--font', f.family);

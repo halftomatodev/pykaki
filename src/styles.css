@@ -15,6 +15,8 @@
   --t-note: color-mix(in srgb, #eab308 9%, var(--panel));
   --t-stage: color-mix(in srgb, #22c55e 8%, var(--panel));
   --box-mix: 55%;
+  --box-strength: 0.3;
+  --box-border: color-mix(in srgb, var(--text) calc(9% + var(--box-strength) * 12%), var(--bg));
   --ok-text: color-mix(in srgb, #15803d 75%, var(--text));
   --font: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
   --mono: Consolas, 'D2Coding', monospace;
@@ -129,7 +131,11 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .react-flow__controls:hover, .react-flow__minimap:hover { opacity: 1; }
 .react-flow__controls-button { background: var(--panel); border-color: var(--line); fill: var(--muted); }
 .react-flow__attribution { background: transparent; opacity: 0.4; }
-.frame { width: 100%; height: 100%; border: 1.5px dashed; border-radius: 16px; position: relative; }
+.frame {
+  width: 100%; height: 100%; border: 1.5px dashed; border-radius: 16px; position: relative;
+  border-color: color-mix(in srgb, var(--g) calc(20% + var(--box-strength) * 50%), transparent);
+  background: color-mix(in srgb, var(--g) calc(var(--box-strength) * 16%), transparent);
+}
 .frame span {
   position: absolute; top: 4px; left: 12px; font-weight: 600; font-size: 11.5px; color: var(--muted);
   pointer-events: auto; cursor: pointer;
@@ -137,8 +143,11 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .frame code { padding: 0 4px; border-radius: 3px; }
 
 .box {
-  width: 250px; border: 1px solid var(--line); border-radius: 10px; color: var(--text);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); font-size: 12px; cursor: grab;
+  width: 250px; border-radius: 10px; color: var(--text); font-size: 12px; cursor: grab;
+  /* 상자 색 = label 색을 면 색과 섞은 것을, 상자 진하기만큼 바탕 위에 칠한다 */
+  background: color-mix(in srgb, color-mix(in srgb, var(--g) var(--box-mix), var(--panel)) calc(var(--box-strength) * 100%), var(--bg));
+  border: 1px solid var(--box-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, calc(var(--box-strength) * 0.06));
 }
 .box.sel { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); }
 .box.editing { cursor: default; }
@@ -147,17 +156,17 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 .box-head { display: flex; gap: 4px; align-items: center; padding: 6px 8px 4px; }
 .badge { font-size: 10px; color: var(--muted); background: var(--hover); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); white-space: nowrap; }
 .badge small { opacity: 0.6; }
-.badge.start { background: color-mix(in srgb, #16a34a 75%, var(--panel)); color: #fff; font-family: inherit; }
+.badge.start { background: color-mix(in srgb, #16a34a calc(25% + var(--box-strength) * 50%), var(--bg)); color: var(--text); font-family: inherit; }
 .box-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.box-lines { position: relative; background: color-mix(in srgb, var(--panel) 72%, transparent); margin: 0 6px; border-radius: 6px; padding: 3px 6px; }
+.box-lines { position: relative; background: color-mix(in srgb, var(--panel) calc(var(--box-strength) * 72%), transparent); margin: 0 6px; border-radius: 6px; padding: 3px 6px; }
 /* 줄: 볼 때와 고칠 때 같은 자리, 같은 크기 */
 .pl { display: flex; align-items: flex-start; gap: 4px; line-height: 1.45; margin: 2px 0; border-radius: 4px; transition: opacity 0.25s; }
 .pl-text { flex: 1; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.pl .who { flex: none; border-radius: 4px; padding: 0 4px; font-weight: 700; color: #222; }
+.pl .who { flex: none; border-radius: 4px; padding: 0 4px; font-weight: 700; color: var(--text); background: color-mix(in srgb, var(--c) calc(18% + var(--box-strength) * 42%), transparent); }
 .pl .attr, .pl .mark { flex: none; color: var(--muted); }
 .pl.narr { color: color-mix(in srgb, var(--text) 80%, var(--panel)); }
 .pl.cmd .pl-text { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.pl.pl-stage code { font-size: 11px; background: var(--t-stage); color: var(--ok-text); padding: 0 3px; border-radius: 3px; }
+.pl.pl-stage code { font-size: 11px; background: color-mix(in srgb, var(--t-stage) calc(var(--box-strength) * 100%), transparent); color: var(--ok-text); padding: 0 3px; border-radius: 3px; }
 .pl.note { color: var(--muted); opacity: 0.8; }
 .pl.pl-stage:focus { outline: none; }
 /* 고칠 때 글자 자리: 테두리·바탕·여백 없이 보기 글자와 똑같이 */
@@ -191,7 +200,7 @@ input.box-title.ed { flex: 1; min-width: 0; }
 .todo { color: var(--danger); font-style: normal; }
 .box-exit { padding: 5px 8px 8px; font-size: 11.5px; color: var(--muted); }
 .exit-label.call { color: #7c5cd6; }
-.choice { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 3px 14px 3px 7px; margin-top: 4px; color: var(--text); }
+.choice { position: relative; background: color-mix(in srgb, var(--panel) calc(var(--box-strength) * 100%), transparent); border: 1px solid var(--box-border); border-radius: 6px; padding: 3px 14px 3px 7px; margin-top: 4px; color: var(--text); }
 .react-flow__handle { width: 9px; height: 9px; background: var(--muted); border: 2px solid var(--panel); }
 .react-flow__handle.h-call { background: #7c5cd6; }
 .react-flow__handle.connectingfrom, .react-flow__handle:hover { background: var(--accent); }
@@ -299,3 +308,45 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 .keys td:last-child { width: 28px; text-align: right; }
 .key { font-family: var(--mono); font-size: 12px; background: var(--faint); color: var(--text); min-width: 110px; }
 .key.rec { background: var(--accent-soft); color: var(--accent); font-family: inherit; }
+
+/* ── 1비트 테마: 칠하지 않고 모두 같은 바탕에 글자색 선만 ── */
+:root[data-mono='1'] {
+  --line: var(--text); --muted: var(--text); --faint: transparent; --hover: transparent; --accent-soft: transparent;
+  --t-cmd: transparent; --t-note: transparent; --t-stage: transparent; --ok-text: var(--text);
+  --danger: var(--text); --play: var(--text); --box-border: var(--text);
+}
+[data-mono='1'] .box, [data-mono='1'] .side, [data-mono='1'] .modal { background: var(--bg); border: 1px solid var(--text); border-radius: 0; box-shadow: none; }
+[data-mono='1'] .box-lines, [data-mono='1'] .choice, [data-mono='1'] .line, [data-mono='1'] .dbg { background: transparent; border-radius: 0; }
+[data-mono='1'] .choice { border: 1px solid var(--text); }
+[data-mono='1'] .frame { background: transparent; border: 1px dashed var(--text); border-radius: 0; }
+[data-mono='1'] .pl .who, [data-mono='1'] .badge, [data-mono='1'] .badge.start { background: transparent; border-radius: 0; outline: 1px solid var(--text); outline-offset: -1px; color: var(--text); }
+[data-mono='1'] .pl.pl-stage code { background: transparent; padding: 0; }
+[data-mono='1'] .todo { text-decoration: underline dotted; }
+[data-mono='1'] .box.sel { outline: 2px solid var(--text); outline-offset: 2px; }
+[data-mono='1'] .box.playing { outline: 2px dashed var(--text); outline-offset: 3px; box-shadow: none; }
+[data-mono='1'] .box.editing .pl.active { background: transparent; box-shadow: none; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--text) 40%, transparent); }
+[data-mono='1'] button:hover:not(:disabled), [data-mono='1'] .tabs button.on { text-decoration: underline; }
+[data-mono='1'] button.on, [data-mono='1'] .swatch.on { outline: 1px solid var(--text); }
+[data-mono='1'] .swatch { border-radius: 0; }
+[data-mono='1'] :is(select, input, textarea) { background: transparent; border-radius: 0; }
+[data-mono='1'] :is(input, textarea, select):focus { border-color: var(--text); }
+[data-mono='1'] .toolbar, [data-mono='1'] .sidebar, [data-mono='1'] .right { background: var(--bg); }
+[data-mono='1'] .react-flow__edge-path, [data-mono='1'] .react-flow__edge.cross .react-flow__edge-path,
+[data-mono='1'] .react-flow__edge.k-call .react-flow__edge-path { stroke: var(--text); }
+[data-mono='1'] .react-flow__edge-text { fill: var(--text); }
+[data-mono='1'] .react-flow__arrowhead polyline { stroke: var(--text); fill: var(--text); }
+[data-mono='1'] .react-flow__handle, [data-mono='1'] .react-flow__handle.h-call { background: var(--bg); border: 1.5px solid var(--text); }
+[data-mono='1'] .react-flow__controls-button { background: var(--bg); border-color: var(--text); fill: var(--text); }
+[data-mono='1'] .warn-item { background: transparent; border: 1px solid var(--text); border-radius: 0; }
+[data-mono='1'] .count { background: transparent; outline: 1px solid var(--text); }
+[data-mono='1'] pre.rpy { background: var(--bg); color: var(--text); border: 1px solid var(--text); border-radius: 0; }
+[data-mono='1'] .stage { background: var(--bg); border: 1px solid var(--text); border-radius: 0; color: var(--text); }
+[data-mono='1'] .textbox { background: var(--bg); border: 1px solid var(--text); border-radius: 0; color: var(--text); }
+[data-mono='1'] .textbox .name { color: var(--text) !important; }
+[data-mono='1'] .cmds span { background: transparent; outline: 1px solid var(--text); color: var(--text); border-radius: 0; }
+[data-mono='1'] :is(.pmenu, .ended) button { background: var(--bg); color: var(--text); border: 1px solid var(--text); border-radius: 0; }
+[data-mono='1'] .toast { border-radius: 0; }
+[data-mono='1'] .ucaret { border-radius: 0; }
+input[type='range'] { flex: 1; padding: 0; background: transparent; border: none; accent-color: var(--accent); }
+[data-mono='1'] .exit-label.call { color: var(--text); }
+[data-mono='1'] .grp { border-left-color: var(--text) !important; border-radius: 0; }

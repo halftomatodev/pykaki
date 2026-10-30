@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, Line } from './types';
-import { hexAlpha, uid } from './util';
+import { uid } from './util';
 import { changeThenFocus } from './actions';
 import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage, stageCode } from './stage';
@@ -26,7 +26,7 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const onEsc = (e: React.KeyboardEvent) => e.key === 'Escape' && useStore.setState({ inlineEdit: null });
 
   return (
-    <div className={cls} style={{ background: g ? `color-mix(in srgb, ${g.color} var(--box-mix), var(--panel))` : 'var(--panel)' }}>
+    <div className={cls} style={{ '--g': g?.color ?? 'var(--panel)' } as React.CSSProperties}>
       <Handle type="target" id="in" position={tb ? Position.Top : Position.Left} />
       <div className="box-head">
         <span className="badge" title="렌파이 label">
@@ -233,7 +233,7 @@ function LineRow({ l, editing, active, cls, rowProps, onFocus, onKey, onText }: 
       onKeyDown={editing && stage ? onKey : undefined}
     >
       {l.type === 'say' && (
-        <span className="who" style={{ background: ch ? hexAlpha(ch.color, 0.55) : '#fecaca' }}>
+        <span className={'who' + (ch ? '' : ' unknown')} style={{ '--c': ch?.color ?? '#ef4444' } as React.CSSProperties}>
           {ch?.name ?? l.who ?? '?'}
         </span>
       )}
@@ -248,7 +248,7 @@ export function GroupFrame({ data }: NodeProps) {
   const g = useStore((s) => s.project.labels.find((l) => l.id === (data as any).groupId));
   if (!g) return null;
   return (
-    <div className="frame" style={{ borderColor: hexAlpha(g.color, 0.7), background: hexAlpha(g.color, 0.16) }}>
+    <div className="frame" style={{ '--g': g.color } as React.CSSProperties}>
       <span title="클릭: 이 label의 상자 모두 선택">
         {g.title ? `${g.title} · ` : ''}
         <code>{g.name}</code>
