@@ -148,8 +148,8 @@ input[type='color']::-webkit-color-swatch { border: none; border-radius: 50%; }
 
 .box {
   width: 250px; border-radius: 10px; color: var(--text); font-size: 12px; cursor: grab;
-  /* 상자 색 = label 색을 면 색과 섞은 것을, 상자 진하기만큼 바탕 위에 칠한다 */
-  background: color-mix(in srgb, color-mix(in srgb, var(--g) var(--box-mix), var(--panel)) calc(var(--box-strength) * 100%), var(--bg));
+  /* 상자 색 = 면 색에 label 색을 (상자에 label 색 × 상자 진하기)만큼 섞는다. 캔버스 바탕색과는 섞지 않는다 */
+  background: color-mix(in srgb, var(--g) calc(var(--box-mix) * var(--box-strength)), var(--panel));
   border: 1px solid var(--box-border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, calc(var(--box-strength) * 0.06));
 }
@@ -444,3 +444,18 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 .bc-hex { width: 96px; font-family: var(--mono); }
 /* 상자에 직접 고른 색은 Apple 컬러풀에서도 그 색 그대로 쓴다 */
 [data-look='apple-color'] .box.own-color { --gv: var(--g); }
+
+/* 설정에서 칠한 상자: 고른 색 그대로. 글자와 흐린 글자, 선은 그 색 위에서 읽히게 다시 맞춘다
+   (옆에 붙는 단추·창은 상자 안에 있지만 원래 색을 쓰도록 상자 머리/줄/다음 흐름에만 건다) */
+:root:not([data-mono='1']) .react-flow .box.own-color { background: var(--g); border-color: color-mix(in srgb, var(--g) 80%, #000); }
+:root:not([data-mono='1']) .box.own-color :is(.box-head, .box-lines > .pl, .box-exit, .more) {
+  --text: var(--bt); --panel: var(--g);
+  --muted: color-mix(in srgb, var(--bt) 62%, var(--g));
+  --line: color-mix(in srgb, var(--bt) 22%, var(--g));
+  --faint: color-mix(in srgb, var(--bt) 8%, transparent); --hover: color-mix(in srgb, var(--bt) 10%, transparent);
+  --t-stage: color-mix(in srgb, var(--bt) 12%, transparent); --ok-text: var(--bt);
+  color: var(--bt);
+}
+:root:not([data-mono='1']) .box.own-color .box-lines { background: transparent; }
+:root:not([data-mono='1']) .box.own-color .badge { background: color-mix(in srgb, var(--bt) 14%, transparent); color: var(--bt); }
+:root:not([data-mono='1']) .box.own-color .choice { background: color-mix(in srgb, var(--bt) 10%, transparent); border-color: color-mix(in srgb, var(--bt) 25%, transparent); color: var(--bt); }

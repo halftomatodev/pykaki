@@ -27,7 +27,7 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const onEsc = (e: React.KeyboardEvent) => e.key === 'Escape' && useStore.setState({ inlineEdit: null });
 
   return (
-    <div className={cls + (b.color ? ' own-color' : '')} style={{ '--g': b.color ?? g?.color ?? 'var(--panel)' } as React.CSSProperties}>
+    <div className={cls + (b.color ? ' own-color' : '')} style={{ '--g': b.color ?? g?.color ?? 'var(--panel)', '--bt': b.color && !isLight(b.color) ? '#ffffff' : '#1c1c1e' } as React.CSSProperties}>
       {editing && <FlowMenu b={b} />}
       <Handle type="target" id="in" position={tb ? Position.Top : Position.Left} />
       <div className="box-head">
