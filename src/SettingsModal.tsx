@@ -1,7 +1,7 @@
 // 환경 설정 창: 화면 색, 단축키 바꾸기
 import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, usePrefs, type ActionId, type Colors } from './prefs';
+import { ACTIONS, DIMS, FONTS, THEMES, colorsOf, ensureNeodgm, ensurePretendard, comboLabel, comboOf, resetKeys, resetPrefs, usePrefs, type ActionId, type Colors } from './prefs';
 
 const close = () => useStore.setState({ showPrefs: false });
 
@@ -16,6 +16,14 @@ export function SettingsModal() {
         <BoxColors />
         <KeyPrefs />
         <div className="row end">
+          <button
+            className="danger"
+            title="화면 색, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로. 대본과 상자 색은 그대로예요"
+            onClick={() => confirm('화면 색, 글꼴, 집중 모드 흐림, 단축키를 모두 처음 값으로 되돌릴까요?\n대본과 상자 색은 그대로예요.') && (resetPrefs(), useStore.getState().say('설정을 처음 값으로 되돌렸어요'))}
+          >
+            모든 설정을 처음 값으로
+          </button>
+          <span className="sp" />
           <button onClick={close}>닫기</button>
         </div>
       </div>

@@ -459,3 +459,4 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 :root:not([data-mono='1']) .box.own-color .box-lines { background: transparent; }
 :root:not([data-mono='1']) .box.own-color .badge { background: color-mix(in srgb, var(--bt) 14%, transparent); color: var(--bt); }
 :root:not([data-mono='1']) .box.own-color .choice { background: color-mix(in srgb, var(--bt) 10%, transparent); border-color: color-mix(in srgb, var(--bt) 25%, transparent); color: var(--bt); }
+.row.end .sp { flex: 1; }

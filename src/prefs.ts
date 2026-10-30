@@ -73,8 +73,14 @@ interface Prefs {
 const KEY = 'pykaki-prefs';
 const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as Record<ActionId, string>;
 
+// 처음 값
+const defaults = (): Prefs => ({
+  theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors }, keys: defKeys(),
+  font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50,
+});
+
 function loadPrefs(): Prefs {
-  const d: Prefs = { theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors }, keys: defKeys(), font: 'default', dim: 'mid', boxStrength: 30, frameWidth: 3, labelTint: 50 };
+  const d = defaults();
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null');
     if (raw) return { ...d, ...raw, custom: { ...d.custom, ...raw.custom }, keys: { ...d.keys, ...raw.keys } };
@@ -86,6 +92,7 @@ function loadPrefs(): Prefs {
 
 export const usePrefs = create<Prefs>(loadPrefs);
 export const resetKeys = () => usePrefs.setState({ keys: defKeys() });
+export const resetPrefs = () => usePrefs.setState(defaults());
 
 const themeOf = (p: Prefs) => THEMES.find((t) => t.id === p.theme) ?? THEMES[0];
 export const colorsOf = (p: Prefs) => (p.theme === 'custom' ? p.custom : themeOf(p).colors);
