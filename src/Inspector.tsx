@@ -156,7 +156,7 @@ function LineRow({ l, i, upd, drag, lookOpen, setLookOpen }: { l: Line; i: numbe
   const toggleLook = (e: React.MouseEvent<HTMLElement>) => {
     if (lookPos) return setLookOpen(null);
     const panel = e.currentTarget.closest('.right-panel')!.getBoundingClientRect();
-    const top = Math.max(8, Math.min(e.currentTarget.closest('.line')!.getBoundingClientRect().top, window.innerHeight - 340));
+    const top = Math.max(8, Math.min(e.currentTarget.closest('.line')!.getBoundingClientRect().top, window.innerHeight - 420));
     setLookOpen({ id: l.id, style: { top, right: window.innerWidth - panel.left + 8 } });
   };
   const placeholder =({ narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' } as Record<string, string>)[l.type];

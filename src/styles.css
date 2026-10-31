@@ -531,6 +531,9 @@ fieldset.plain:disabled { opacity: 0.4; }
 .look-pop { position: fixed; z-index: 50; width: 262px; }
 .look-close { position: absolute; top: 3px; right: 3px; opacity: .6; }
 .look { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+.preview { position: relative; display: flex; align-items: center; height: 84px; padding: 0; background: #15171f; border-radius: 6px; overflow: hidden; cursor: pointer; user-select: none; }
+.preview-text { width: 100%; padding: 0; line-height: 1.25; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; font-family: var(--game-font); }
+.preview-again { position: absolute; right: 3px; bottom: 3px; color: #fff; background: rgba(255, 255, 255, .14); line-height: 1; }
 .look-title { font-size: 11px; font-weight: 600; color: var(--muted); }
 .look-title:not(:first-child) { margin-top: 4px; }
 .look .sf-row select { max-width: 92px; }

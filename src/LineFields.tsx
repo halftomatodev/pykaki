@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { ImageKind, Line, LineFx, SayStyle } from './types';
-import { EFFECTS, FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, fxArgs, stageCode } from './stage';
+import { EFFECTS, FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, fxArgs, lineCps, stageCode } from './stage';
 import { useGameFolder } from './gameFolder';
+import { LinePreview } from './PlayStage';
 
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
 
@@ -131,7 +132,7 @@ export function SayFields({ l, set }: { l: Line; set: SetLine }) {
     <>
       <div className="sf-row">
         {num('size', '크기', '글자 크기', 200)}
-        {num('cps', '글자/초', '1초에 나오는 글자 수. 비우면 게임 설정을 따라요', 500)}
+        {num('cps', lineCps(s) !== undefined ? String(lineCps(s)) : '글자/초', '1초에 나오는 글자 수. 효과를 고르면 기본값을 써요. 효과가 없고 비워 두면 게임 설정을 따라요', 500)}
         <select title="등장 효과" value={s.effect ?? ''} onChange={(e) => put('effect', e.target.value)}>
           {EFFECTS.map(([k, t]) => (
             <option key={k} value={k}>{t}</option>
@@ -163,9 +164,11 @@ export function SayFields({ l, set }: { l: Line; set: SetLine }) {
 // 화면 효과는 렌파이 편집기에서 고치고, 여기서는 받아 적은 값을 보여 주기만 한다
 export function LineLook({ l, set }: { l: Line; set: SetLine }) {
   const fx = fxArgs(l.fx);
+  const tagsOn = useStore((s) => s.project.settings.allowTextTags);
   return (
     <div className="look">
       <div className="look-title">글자 모양, 속도, 등장 효과</div>
+      <LinePreview line={l} tagsOn={tagsOn} />
       <SayFields l={l} set={set} />
       {fx.length > 0 && <div className="sf-pos" title="렌파이 편집기의 대사 탭에서 고쳐요">{fx.join(', ')}</div>}
     </div>

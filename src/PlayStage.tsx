@@ -3,7 +3,8 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, u
 import type { Line } from './types';
 import type { PStage, Sprite } from './playEngine';
 import { transInfo } from './playEngine';
-import { parseTagged } from './textTags';
+import { lineCps } from './stage';
+import { parseTagged, type Tagged } from './textTags';
 import { gameFont, pictureOf, useGameFolder, type GameLook } from './gameFolder';
 
 // 줄마다 고른 글꼴. 못 읽으면 게임 기본 글꼴로 보인다
@@ -105,20 +106,8 @@ export function Scene({ stage, look }: { stage: PStage; look: GameLook }) {
 
 export interface SayBoxHandle { click(): boolean } // 아직 다 안 나왔으면 다 보여 주고 true
 
-// 대사창. 속도(글자/초)와 멈춤 태그에 맞춰 글자를 하나씩 내보낸다
-export const SayBox = forwardRef<SayBoxHandle, {
-  line: Line;
-  who: { name: string; color?: string } | null;
-  look: GameLook;
-  tagsOn: boolean;
-  wait: number;
-  onDone(done: boolean): void;
-  onNoWait(): void;
-  onEdit(): void;
-}>(function SayBox({ line, who, look, tagsOn, wait, onDone, onNoWait, onEdit }, ref) {
-  const style = line.say ?? {};
-  const parsed = useMemo(() => parseTagged(line.text, tagsOn, gameFont), [line.text, tagsOn]);
-  const cps = style.cps ?? look.textCps;
+// 글자를 속도(글자/초)와 멈춤 태그에 맞춰 하나씩 내보낸다. 대사창과 미리보기가 함께 쓴다
+function useReveal(parsed: Tagged, cps: number, wait = 0) {
   const total = parsed.glyphs.length;
   const anyRate = cps > 0 || parsed.glyphs.some((g) => g.fixed && g.rate > 0);
   const [passed, setPassed] = useState(0); // 지나온 멈춤 수
@@ -136,11 +125,6 @@ export const SayBox = forwardRef<SayBoxHandle, {
   }, [holding, wait]);
 
   useEffect(() => {
-    onDone(done);
-    if (done && parsed.noWait) onNoWait();
-  }, [done]);
-
-  useEffect(() => {
     if (holding || done) return;
     if (shown >= limit) {
       // {w=1.0}은 기다렸다 넘어가고, {w}는 클릭을 기다린다
@@ -155,14 +139,107 @@ export const SayBox = forwardRef<SayBoxHandle, {
     return () => clearTimeout(t);
   }, [shown, limit, holding, done, cps]);
 
-  useImperativeHandle(ref, () => ({
-    click() {
-      if (holding) return setHolding(false), true;
-      if (shown < limit) return setShown(limit), true;
-      if (stop) return setPassed((v) => v + 1), true;
-      return false;
-    },
-  }), [holding, shown, limit, stop]);
+  // 아직 다 안 나왔으면 다 보여 주고 true
+  const click = () => {
+    if (holding) return setHolding(false), true;
+    if (shown < limit) return setShown(limit), true;
+    if (stop) return setPassed((v) => v + 1), true;
+    return false;
+  };
+  return { shown: holding ? 0 : shown, done, click };
+}
+
+function Glyphs({ parsed, shown }: { parsed: Tagged; shown: number }) {
+  return (
+    <>
+      {parsed.glyphs.map((g, i) =>
+        g.ch === '\n' ? (
+          <br key={i} />
+        ) : (
+          <span key={i} className={'ch' + (i < shown ? ' on' : '')} style={{ ...g.style, '--i': i } as React.CSSProperties}>{g.ch}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+// 설정 카드의 미리보기: 렌파이를 켜지 않고 이 줄의 글자 효과를 본다. 글자는 칸에 꽉 차게 맞춘다
+export function LinePreview({ line, tagsOn }: { line: Line; tagsOn: boolean }) {
+  const look = useGameFolder((s) => s.look);
+  const [replay, setReplay] = useState(0);
+  const cps = lineCps(line.say) ?? look.textCps;
+  // 값을 바꾸면 처음부터 다시 나온다
+  return <PreviewBody key={[line.id, line.say?.effect, cps, replay].join('|')} line={line} tagsOn={tagsOn} cps={cps} look={look} onReplay={() => setReplay((v) => v + 1)} />;
+}
+
+const PREVIEW_MIN = 11;
+const PREVIEW_MAX = 60;
+
+function PreviewBody({ line, tagsOn, cps, look, onReplay }: { line: Line; tagsOn: boolean; cps: number; look: GameLook; onReplay(): void }) {
+  const text = line.text.trim() ? line.text : '효과 미리보기';
+  const parsed = useMemo(() => parseTagged(text, tagsOn, gameFont), [text, tagsOn]);
+  const { shown, click } = useReveal(parsed, cps);
+  const box = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const style = line.say ?? {};
+
+  // 칸에 들어가는 가장 큰 글자 크기를 찾는다. 아직 안 나온 글자도 자리를 차지해서 크기가 흔들리지 않는다
+  useLayoutEffect(() => {
+    const b = box.current;
+    const t = inner.current;
+    if (!b || !t) return;
+    let lo = PREVIEW_MIN;
+    let hi = PREVIEW_MAX;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      t.style.fontSize = mid + 'px';
+      if (t.scrollHeight <= b.clientHeight && t.scrollWidth <= b.clientWidth) lo = mid;
+      else hi = mid - 1;
+    }
+    t.style.fontSize = lo + 'px';
+  }, [text, style.font, tagsOn]);
+
+  return (
+    <div
+      ref={box}
+      className="preview"
+      title="클릭: 다시 보기"
+      style={{ '--game-font': `${gameFont(look.font) ?? 'var(--font)'}, var(--font)` } as React.CSSProperties}
+      onClick={() => click() || onReplay()}
+    >
+      <div
+        ref={inner}
+        className={'preview-text fx-' + (style.effect || 'none')}
+        style={{ color: style.color ?? look.textColor, fontFamily: fontStack(style.font) }}
+      >
+        <Glyphs parsed={parsed} shown={shown} />
+      </div>
+      <button className="preview-again" title="다시 보기" onClick={(e) => (e.stopPropagation(), onReplay())}>↺</button>
+    </div>
+  );
+}
+
+// 대사창
+export const SayBox = forwardRef<SayBoxHandle, {
+  line: Line;
+  who: { name: string; color?: string } | null;
+  look: GameLook;
+  tagsOn: boolean;
+  wait: number;
+  onDone(done: boolean): void;
+  onNoWait(): void;
+  onEdit(): void;
+}>(function SayBox({ line, who, look, tagsOn, wait, onDone, onNoWait, onEdit }, ref) {
+  const style = line.say ?? {};
+  const parsed = useMemo(() => parseTagged(line.text, tagsOn, gameFont), [line.text, tagsOn]);
+  const { shown, done, click } = useReveal(parsed, lineCps(style) ?? look.textCps, wait);
+
+  useEffect(() => {
+    onDone(done);
+    if (done && parsed.noWait) onNoWait();
+  }, [done]);
+
+  useImperativeHandle(ref, () => ({ click }));
 
   const size = style.size ?? look.textSize;
   const windowTop = (look.height - look.textboxHeight) * look.textboxYalign;
@@ -204,13 +281,7 @@ export const SayBox = forwardRef<SayBoxHandle, {
           fontFamily: fontStack(style.font),
         }}
       >
-        {parsed.glyphs.map((g, i) =>
-          g.ch === '\n' ? (
-            <br key={i} />
-          ) : (
-            <span key={i} className={'ch' + (i < shown && !holding ? ' on' : '')} style={{ ...g.style, '--i': i } as React.CSSProperties}>{g.ch}</span>
-          ),
-        )}
+        <Glyphs parsed={parsed} shown={shown} />
       </div>
     </div>
   );
