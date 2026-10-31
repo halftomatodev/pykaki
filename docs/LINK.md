@@ -6,11 +6,11 @@
 
 | 다루는 것 | 어디서 | 어디에 저장 |
 |---|---|---|
-| 대사, 선택지, 흐름, 줄마다 넣는 화면 효과 | PyKaki | `.flow.json` |
+| 대사, 선택지, 흐름 | PyKaki | `.flow.json` |
 | 그림, webm 영상, 음악, 효과음 넣기 | 주로 showpy 편집기 (PyKaki에서도 칸으로 넣을 수 있음) | `.flow.json` (showpy에서 넣으면 PyKaki가 받아 적음) |
 | 그림 위치 | showpy 편집기만 | `game/ui_kit/stage_layout.rpy` |
 | 대사 글자 크기, 글꼴, 색, 속도, 등장 효과 | PyKaki | `.flow.json` |
-| 대사와 이름의 위치 | showpy 편집기만 (PyKaki는 받아 적어 보여 줌) | `.flow.json` |
+| 대사와 이름의 위치, 줄마다 바꾸는 화면 효과 | showpy 편집기 대사 탭 (PyKaki는 받아 적어 보여 줌) | `.flow.json` |
 
 ```
 PyKaki (.flow.json이 원본)
@@ -22,7 +22,7 @@ PyKaki (.flow.json이 원본)
 PyKaki가 showpy_inbox.json을 받아 적음 → 대본에 보임 → 다음 내보내기에도 남음
 ```
 
-**역가져오기는 없습니다.** PyKaki는 `.rpy`를 읽지 않습니다. 받는 것은 `showpy_inbox.json`에 적힌 기록뿐이고, 대사 글자와 선택지는 이 길로 오지 않습니다. 대사는 위치만 옵니다.
+**역가져오기는 없습니다.** PyKaki는 `.rpy`를 읽지 않습니다. 받는 것은 `showpy_inbox.json`에 적힌 기록뿐이고, 대사 글자와 선택지는 이 길로 오지 않습니다. 대사는 위치와 화면 효과만 옵니다.
 
 ## 2. 내보낸 `.rpy`의 표시
 
@@ -68,7 +68,8 @@ showpy가 쓰고, PyKaki가 읽은 뒤 비웁니다. PyKaki가 읽은 기록만 
     { "id": "sp9a8f102", "op": "insert", "code": "play sound \"audio/knock.wav\"", "box": "n1", "after": "sp9a8f101" },
     { "id": "sp9a8f103", "op": "insert", "code": "scene bg room", "box": "n3", "end": "n3" },
     { "id": "sp9a8f104", "op": "replace", "code": "show mina scared with dissolve", "line": "l4" },
-    { "id": "sp9a8f105", "op": "say_pos", "line": "l5", "pos": { "x": 520, "y": 60 } }
+    { "id": "sp9a8f105", "op": "say_pos", "line": "l5", "pos": { "x": 520, "y": 60 } },
+    { "id": "sp9a8f106", "op": "say_fx", "line": "l5", "sayFx": { "fx": "ascii", "overlay": "off", "warp": "3", "exclude": ["say"] } }
   ]
 }
 ```
@@ -76,14 +77,15 @@ showpy가 쓰고, PyKaki가 읽은 뒤 비웁니다. PyKaki가 읽은 기록만 
 | 값 | 뜻 |
 |---|---|
 | `id` | `insert`면 새 줄의 id (`.rpy`의 `# @l:`과 같음). 이미 있는 id면 다시 넣지 않습니다 |
-| `op` | `insert` 줄 넣기, `replace` 줄 바꾸기, `say_pos` 대사 위치 |
+| `op` | `insert` 줄 넣기, `replace` 줄 바꾸기, `say_pos` 대사 위치, `say_fx` 대사 화면 효과 |
 | `code` | 렌파이 명령 한 줄 |
 | `box` | 줄이 들어갈 상자. 기준 줄이 사라졌을 때 그 상자의 끝에 넣습니다 |
 | `before` `after` `end` | `insert`의 자리. 줄 앞, 줄 뒤, 상자 끝 중 하나 |
-| `line` | `replace`, `say_pos`로 바꿀 줄의 id |
+| `line` | `replace`, `say_pos`, `say_fx`로 바꿀 줄의 id |
 | `pos` | `say_pos`의 값. `x` `y` `name_x` `name_y`, 대사창 왼쪽 위 기준. `null`이면 지움 |
+| `sayFx` | `say_fx`의 값. PyKaki `LineFx`와 같은 이름: `fx` `transition`(`none`은 바로) `overlay`(`on` `off`) `warp` `cursor` `exclude`(목록). `null`이면 지움 |
 
-`say_pos`를 받으면 그 대사 줄의 괄호에 같은 값을 내보냅니다. 예전 PyKaki는 이 기록을 모른 채 지우므로 두 프로그램을 같이 올립니다.
+`say_pos`, `say_fx`를 받으면 그 대사 줄의 괄호에 같은 값을 내보냅니다. 괄호 순서는 PyKaki 순서로 정리됩니다. 예전 PyKaki는 이 기록을 모른 채 지우므로 두 프로그램을 같이 올립니다.
 
 `code`는 `show` `scene` `hide` `play` `stop`으로 시작하는 줄만 들어옵니다. PyKaki(`src/inbox.ts`)는 칸으로 나타낼 수 있으면 칸이 있는 연출 줄로, 아니면 "직접 명령" 줄로 바꿉니다.
 
@@ -120,7 +122,7 @@ define stage.placed = {
   showpy에 새 store 이름이 생기면 여기와 `PLUGIN_NAMES`를 같이 고칩니다.
 - 렌파이 그림 이름은 파일 이름에서 확장자를 빼고 소문자로 바꾼 것입니다. 안쪽 폴더는 이름에 안 들어갑니다.
 - `movies/mask_ghost.webm`은 `show ghost`로 씁니다. (앞의 `mask_`는 투명 영상 표시)
-- PyKaki는 `label start:`를 내보내므로, 다른 `.rpy`에 `label start:`가 있으면 렌파이가 오류를 냅니다. 폴더를 연결하면 PyKaki가 알려 줍니다.
+- PyKaki는 `label start:`를 내보내지 않고 `config.label_overrides["start"]`를 첫 상자로 정합니다. `script.rpy`는 그대로 둬도 되고, 그 안의 `label start:`는 실행되지 않습니다. 대본에 이름이 `start`인 label을 만들 때만 겹치므로, 그때 PyKaki가 알려 줍니다.
 
 ## 6. 플레이 화면이 읽는 파일
 
@@ -134,11 +136,12 @@ PyKaki 플레이 화면은 연결한 game 폴더에서 아래 값을 글자로 �
 | `ui_kit/stage_layout.rpy` | 그림 위치 |
 | `images/`, `movies/`, `audio/` | 그림, 영상, 소리 |
 
-## 7. 확인 상태 (showpy 4.4, 렌파이 8.5.3)
+## 7. 확인 상태 (showpy 4.5, 렌파이 8.5.3)
 
 **자동으로 실행해서 확인함:**
 - `cps`로 대사 속도가 바뀜 (`preferences.text_cps = 0`인 프로젝트에서. `speed`는 이 프로젝트에서 효과 없음)
-- 대사 탭 함수로 위치 저장 → 받아 적기 → 다시 내보내기를 하면 `.rpy`가 글자 하나까지 같음. PyKaki 원고에서 글자 크기 바꾸기는 막힘
+- 대사 탭 함수로 위치와 화면 효과 저장 → 받아 적기 → 다시 내보내기를 하면 값이 그대로 남음. PyKaki 원고에서 글자 크기 바꾸기는 막힘
+- `script.rpy`가 그대로 있거나, 지웠거나, 플러그인이 없어도 게임 시작이 첫 상자로 이어짐
 - 플레이 화면의 그림, 표정, 선택지, 뒤로 가기, 상자 가운데서 시작, F8과 Esc. **브라우저 전체화면은 시험 도구에서 되지 않아 창을 덮는 화면으로 확인함**
 - 샘플의 세 갈래와 call에서 지금 상자 추적이 맞음. `label ward:` 아래 `label ward.n1:`이 이어져도 동작함
 - 줄 넣기 → 받아 적기 → 다시 내보내기를 하면 `.rpy`가 글자 하나까지 같음

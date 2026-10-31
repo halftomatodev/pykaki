@@ -3,7 +3,7 @@ import { useStore } from './store';
 import { createEmpty, normalizeProject } from './sample';
 import { generateRpy } from './exportRpy';
 import { snapAdd, snapAuto } from './persist';
-import { connectFolder, folderAllowed, folderReady, hasDirPicker, pullInbox, RPY_FILE, scanFolder, writeRpyToFolder } from './gameFolder';
+import { connectFolder, disconnectFolder, folderAllowed, folderReady, hasDirPicker, looksLikeGame, pullInbox, readRpyFromFolder, RPY_FILE, scanFolder, useGameFolder, writeRpyToFolder } from './gameFolder';
 
 const w = window as any;
 const hasFS = typeof w.showSaveFilePicker === 'function';
@@ -97,10 +97,36 @@ export async function newProject() {
   s.load(createEmpty(), { fileName: null, dirty: false });
 }
 
+// 렌파이 프로젝트 연결: 폴더를 고르면 연결, showpy 확인, 첫 내보내기까지 한 번에 한다
+export async function linkProject() {
+  if (!(await connectFolder())) return;
+  const s = useStore.getState();
+  if (!(await looksLikeGame())) {
+    await disconnectFolder();
+    alert('렌파이 프로젝트 폴더가 아닌 것 같아요. gui.rpy가 들어 있는 game 폴더나 그 위 프로젝트 폴더를 골라 주세요.');
+    return;
+  }
+  const f = useGameFolder.getState();
+  if (!!s.project.settings.renpyLink !== f.hasShowpy) s.update((p) => void (p.settings.renpyLink = f.hasShowpy));
+  try {
+    const old = await readRpyFromFolder();
+    const code = generateRpy(useStore.getState().project).code;
+    if (old && old !== code && !confirm(`이 폴더에 이미 ${RPY_FILE}가 있어요. 지금 대본으로 덮어쓸까요?\n다른 대본을 쓰던 폴더라면 [취소]를 누르고, 그 대본을 먼저 여세요.`)) {
+      s.say('폴더만 연결했어요. 내보내려면 Ctrl+E를 누르세요');
+      return;
+    }
+  } catch (e: any) {
+    alert('폴더를 정리하지 못했어요: ' + e.message);
+    return;
+  }
+  await exportRpyFile(true);
+  s.say(f.hasShowpy ? '연결했어요. 렌파이에서 게임을 실행하면 돼요' : '연결했어요. showpy가 없어서 위치와 화면 효과는 렌파이에서 고칠 수 없어요');
+}
+
 export async function exportRpyFile(again = false) {
   let s = useStore.getState();
   // showpy 연결: 연결한 폴더의 script_flow.rpy에 바로 쓴다. 쓰기 전에 showpy가 넣은 줄부터 받아 적어야 안 사라진다
-  const toFolder = s.project.settings.renpyLink && hasDirPicker;
+  const toFolder = hasDirPicker && (s.project.settings.renpyLink || folderReady());
   if (toFolder) {
     if (!folderReady() && !(await connectFolder())) return;
     if (!(await folderAllowed(true))) {

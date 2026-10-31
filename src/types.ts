@@ -10,6 +10,7 @@ export interface LineFx {
   overlay?: string; // on | off
   warp?: string; // 0~5 | default
   cursor?: string; // effect | overlay | top | default
+  exclude?: string[]; // 효과에서 뺄 글자: say | choice | screens
 }
 
 // 대사 한 줄의 글자 모양. showpy 대사 괄호로 내보낸다. 빈 칸은 안 내보낸다

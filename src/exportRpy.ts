@@ -113,7 +113,12 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
     if (startLabel) {
       if (!(sg.id === startLabel.id && entryOf.get(sg.id) === start.id))
         W.push({ level: 'error', msg: '"start"라는 label이 있으면 시작 상자가 그 label의 첫 상자여야 해요', nodeId: start.id });
-    } else out.push('label start:', `    jump ${ref(start.id)}`, '');
+    } else out.push(
+      // 렌파이 새 프로젝트의 script.rpy에도 label start가 있다. 그대로 두고 start로 가는 길만 첫 상자로 돌린다
+      'init python:',
+      `    config.label_overrides["start"] = ${pyStr(ref(start.id))}`,
+      '',
+    );
   }
 
   const I = '    ';
@@ -155,9 +160,8 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
         }
         if (!l.text.trim()) W.push({ level: 'warn', msg: `빈 대사가 있어요 (${b.title || b.id})`, nodeId: b.id });
         pct(l.text, '대사');
-        // 대사 괄호는 플러그인이 받는다. 플러그인이 없으면 오류가 나서 연결을 켰을 때만 쓴다
-        if (!S.renpyLink && sayArgs(l.say).length) W.push({ level: 'warn', msg: `대사의 글자 모양은 showpy 연결을 켜야 내보내요 (${b.title || b.id})`, nodeId: b.id });
-        const fa = S.renpyLink ? [...fxArgs(l.fx), ...sayArgs(l.say)] : [];
+        // 짧은 이름과 화면 효과는 플러그인이 받는다. 플러그인이 없으면 오류가 나서 글자 모양만 렌파이 원래 이름으로 쓴다
+        const fa = S.renpyLink ? [...fxArgs(l.fx), ...sayArgs(l.say)] : sayArgs(l.say, true);
         const tail = fa.length ? ` (${fa.join(', ')})` : '';
         if (l.type === 'narration') return body.push(q(l.text) + tail);
         const c = l.who ? charById.get(l.who) : undefined;

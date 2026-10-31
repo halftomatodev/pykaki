@@ -35,18 +35,27 @@ export function fxArgs(f?: LineFx): string[] {
   if (f.overlay) a.push(`fx_overlay=${f.overlay === 'on' ? 'True' : 'False'}`);
   if (f.warp) a.push(`fx_warp=${warpVal(f.warp)}`);
   if (f.cursor) a.push(`fx_cursor=${pyStr(f.cursor)}`);
+  if (f.exclude) a.push(`fx_exclude=(${f.exclude.map((g) => pyStr(g) + ',').join(' ')})`);
   return a;
 }
 
 // 대사 등장 효과 (렌파이 내장 텍스트 셰이더)
 export const EFFECTS: [string, string][] = [['', '효과 없음'], ['dissolve', '서서히'], ['typewriter', '타자기'], ['slowalpha', '흐리게 대기'], ['flip', '뒤집히며'], ['zoom', '커지며'], ['jitter', '떨림'], ['wave', '물결']];
 
+// showpy가 없는 게임에서는 렌파이 원래 이름으로 내보낸다. 그러면 플러그인 없이도 오류가 나지 않는다
+const NATIVE: Record<keyof SayStyle, string> = {
+  size: 'what_size', font: 'what_font', color: 'what_color', cps: 'what_slow_cps', effect: 'what_textshader',
+  name_size: 'who_size', name_font: 'who_font', name_color: 'who_color',
+  x: 'what_xpos', y: 'what_ypos', name_x: 'namebox_xpos', name_y: 'namebox_ypos',
+};
+
 // 대사 줄의 괄호 안 값: size=30, cps=20 ... 위치는 showpy가 뒤에 덧붙이는 순서와 맞춰 맨 뒤에 둔다
-export function sayArgs(s?: SayStyle): string[] {
+export function sayArgs(s?: SayStyle, native = false): string[] {
   if (!s) return [];
   const a: string[] = [];
-  const num = (k: keyof SayStyle) => s[k] !== undefined && a.push(`${k}=${s[k]}`);
-  const str = (k: keyof SayStyle) => s[k] && a.push(`${k}=${pyStr(String(s[k]))}`);
+  const name = (k: keyof SayStyle) => (native ? NATIVE[k] : k);
+  const num = (k: keyof SayStyle) => s[k] !== undefined && a.push(`${name(k)}=${s[k]}`);
+  const str = (k: keyof SayStyle) => s[k] && a.push(`${name(k)}=${pyStr(String(s[k]))}`);
   num('size');
   str('font');
   str('color');

@@ -106,7 +106,6 @@ const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: 
 
 function Lines({ b, editing }: { b: BoxNode; editing: boolean }) {
   const update = useStore((s) => s.update);
-  const linked = useStore((s) => !!s.project.settings.renpyLink);
   const upd = (fn: (x: BoxNode) => void, key?: string) => update((p) => fn(ops.findBox(p, b.id)!), key);
   const [active, setActive] = useState<string | null>(null);
   const [top, setTop] = useState<number | null>(null);
@@ -177,13 +176,13 @@ function Lines({ b, editing }: { b: BoxNode; editing: boolean }) {
               <StageFields l={al} nd="nodrag" set={setLine(ai)} />
             </div>
           )}
-          {linked && (al.type === 'say' || al.type === 'narration') && (
+          {(al.type === 'say' || al.type === 'narration') && (
             <div
               className="side side-r side-look nodrag nowheel"
               style={{ top }}
               onKeyDown={(e) => e.key === 'Escape' && useStore.setState({ inlineEdit: null })}
             >
-              <LineLook l={al} nd="nodrag" set={setLine(ai)} />
+              <LineLook l={al} set={setLine(ai)} />
             </div>
           )}
         </>

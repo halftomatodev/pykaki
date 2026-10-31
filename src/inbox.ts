@@ -1,19 +1,20 @@
 // showpy가 남긴 그림/영상/소리 줄을 대본에 받아 적는다. 문서: docs/LINK.md
 // .rpy를 되읽지 않는다. showpy_inbox.json에 적힌 줄만 받는다. 대사 글자와 선택지는 받지 않고, 대사는 위치만 받는다.
-import type { BoxNode, Line, Project, SayStyle } from './types';
+import type { BoxNode, Line, LineFx, Project, SayStyle } from './types';
 
 const POS_KEYS = ['x', 'y', 'name_x', 'name_y'] as const;
 
 export interface InboxOp {
   id: string; // 새 줄 id (insert), 또는 이 기록 자체의 id
-  op: 'insert' | 'replace' | 'say_pos';
+  op: 'insert' | 'replace' | 'say_pos' | 'say_fx';
   code?: string; // 렌파이 명령 한 줄 (insert, replace)
   pos?: Partial<Record<(typeof POS_KEYS)[number], number | null>>; // say_pos: 대사 위치. null이면 지움
   box?: string; // 그 줄이 있던 상자. 기준 줄이 사라졌을 때 쓴다
   before?: string; // 이 줄 앞에
   after?: string; // 이 줄 뒤에
   end?: string; // 이 상자의 끝에 (선택지, jump 바로 앞)
-  line?: string; // replace, say_pos: 바꿀 줄
+  sayFx?: Partial<Record<keyof LineFx, string | string[] | null>>; // say_fx: 대사의 화면 효과. null이면 지움
+  line?: string; // replace, say_pos, say_fx: 바꿀 줄
 }
 
 function applySayPos(l: Line, pos: NonNullable<InboxOp['pos']>) {
@@ -86,20 +87,31 @@ function findLine(p: Project, id: string): { box: BoxNode; i: number } | null {
   return null;
 }
 
+function applySayFx(l: Line, vals: NonNullable<InboxOp['sayFx']>) {
+  const fx = { ...l.fx } as Record<string, unknown>;
+  for (const [k, v] of Object.entries(vals)) {
+    if (v === null) delete fx[k];
+    else fx[k] = v;
+  }
+  if (Object.keys(fx).length) l.fx = fx as LineFx;
+  else delete l.fx;
+}
+
 // 기록을 순서대로 대본에 넣는다. p를 직접 고친다
 export function applyInbox(p: Project, ops: InboxOp[]): { applied: number; moved: string[]; dropped: string[] } {
   let applied = 0;
   const moved: string[] = [];
   const dropped: string[] = [];
   for (const op of ops) {
-    if (op.op === 'say_pos') {
+    if (op.op === 'say_pos' || op.op === 'say_fx') {
       const at = op.line ? findLine(p, op.line) : null;
       const l = at?.box.lines[at.i];
-      if (!l || !op.pos || (l.type !== 'say' && l.type !== 'narration')) {
-        dropped.push('대사 위치');
+      if (!l || (l.type !== 'say' && l.type !== 'narration')) {
+        dropped.push(op.op === 'say_pos' ? '대사 위치' : '대사 화면 효과');
         continue;
       }
-      applySayPos(l, op.pos);
+      if (op.pos) applySayPos(l, op.pos);
+      if (op.sayFx) applySayFx(l, op.sayFx);
       applied++;
       continue;
     }

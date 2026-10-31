@@ -48,6 +48,7 @@ interface F {
   media: Media;
   look: GameLook;
   startClash: string | null; // label start가 있는 다른 파일
+  hasShowpy: boolean; // game 폴더에 ui_kit이 있는지
   set(v: Partial<F>): void;
 }
 
@@ -58,6 +59,7 @@ export const useGameFolder = create<F>((set) => ({
   media: NO_MEDIA,
   look: DEFAULT_LOOK,
   startClash: null,
+  hasShowpy: false,
   set: (v) => set(v),
 }));
 
@@ -219,7 +221,7 @@ export async function scanFolder() {
   media.fonts.sort();
   const look = await readLook();
 
-  // 새 렌파이 프로젝트의 script.rpy에도 label start가 있어서 두 번 정의가 된다
+  // 대본에 이름이 start인 label을 만들면 script.rpy의 label start와 겹친다
   let startClash: string | null = null;
   for await (const [name, h] of dir.entries()) {
     if (h.kind !== 'file' || !/\.rpy$/i.test(name) || name === RPY_FILE) continue;
@@ -228,7 +230,8 @@ export async function scanFolder() {
       break;
     }
   }
-  useGameFolder.getState().set({ name: dir.name, media, look, startClash });
+  const hasShowpy = !!(await sub(dir, 'ui_kit'));
+  useGameFolder.getState().set({ name: useGameFolder.getState().name ?? dir.name, media, look, startClash, hasShowpy });
   setTimeout(() => oldUrls.forEach((u) => URL.revokeObjectURL(u)), 5000);
 }
 
@@ -247,8 +250,10 @@ export async function connectFolder() {
     dir = inner ?? picked;
     await kvSet('gameDir', dir);
     await scanFolder();
+    await kvSet('gameName', inner ? picked.name : dir.name);
+    useGameFolder.getState().set({ name: inner ? picked.name : dir.name });
     await pullInbox();
-    useStore.getState().say(`렌파이 폴더 "${dir.name}"를 연결했어요`);
+    useStore.getState().say(`렌파이 폴더 "${useGameFolder.getState().name}"를 연결했어요`);
     return true;
   } catch (e: any) {
     if (e?.name !== 'AbortError') alert('폴더를 연결하지 못했어요: ' + e.message);
@@ -260,7 +265,7 @@ export async function disconnectFolder() {
   dir = null;
   await kvSet('gameDir', null);
   pictures = new Map();
-  useGameFolder.getState().set({ name: null, media: NO_MEDIA, look: DEFAULT_LOOK, startClash: null });
+  useGameFolder.getState().set({ name: null, media: NO_MEDIA, look: DEFAULT_LOOK, startClash: null, hasShowpy: false });
 }
 
 // 앱을 다시 열 때: 연결은 기억하지만, 권한은 사용자가 한 번 눌러야 다시 생긴다
@@ -269,8 +274,10 @@ export async function restoreFolder() {
   try {
     dir = (await kvGet('gameDir')) ?? null;
     if (!dir) return;
-    useGameFolder.getState().set({ name: dir.name });
+    const name = (await kvGet('gameName')) ?? dir.name;
+    useGameFolder.getState().set({ name });
     if (await allowed(false)) await scanFolder();
+    useGameFolder.getState().set({ name });
   } catch {
     dir = null;
   }
@@ -309,6 +316,10 @@ export async function pullInbox(ask = false) {
   s.say(`showpy에서 고친 ${res.applied}곳을 받아 적었어요${extra ? ' (' + extra + ')' : ''}`);
   return res.applied;
 }
+
+// 고른 폴더가 렌파이 프로젝트인지. 새 프로젝트에는 늘 gui.rpy나 options.rpy가 있다
+export const looksLikeGame = async () => (await readText(dir, 'gui.rpy')) !== null || (await readText(dir, 'options.rpy')) !== null;
+export const readRpyFromFolder = () => readText(dir, RPY_FILE);
 
 export async function writeRpyToFolder(code: string) {
   await writeText(dir, RPY_FILE, code);

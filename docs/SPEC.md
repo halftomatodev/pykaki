@@ -72,10 +72,10 @@
   - `show` `{ kind, who, attr, image, at, trans }`: `kind`는 `char`(who+attr) | `bg`(image) | `etc`(image), 위치 `left`/`right`(비우면 가운데)
   - `hide` `{ kind, who, image, trans }`
   - `music` `{ file, stop }`, `sound` `{ file }`
-  - `fx` `{ fx: { fx, transition, overlay, warp, cursor } }`: showpy 화면 효과 명령. 값은 `src/stage.ts`의 `FX_*`
+  - `fx` `{ fx: { fx, transition, overlay, warp, cursor } }`: showpy 화면 효과 명령. 값은 `src/stage.ts`의 `FX_*`. 화면 효과는 렌파이 편집기에서 고치므로 줄 종류 목록에서 뺐고, 예전 파일의 이 줄만 그대로 보여 주고 내보낸다.
   - `trans`는 `dissolve` | `fade` | 비움, 또는 showpy에서 받아 적은 식(`stage.move("inleft", 0.8)` 등). 모두 선택 칸이라 예전 파일은 그대로 열린다.
-- **대사 줄의 `fx`**: `say`, `narration` 줄도 같은 `fx` 값을 가질 수 있다. 연결을 켜면 대사 괄호로 내보낸다.
-- **대사 줄의 `say`** (`SayStyle`): `size` `font` `color` `cps` `effect` `name_size` `name_font` `name_color`는 PyKaki에서 고친다. `x` `y` `name_x` `name_y`는 showpy에서 받아 적은 값을 보여 주고 지우기만 한다. 연결을 켜면 대사 괄호로 내보내고(`sayArgs`), 끄면 내보내지 않고 경고한다. 모두 선택 칸이라 예전 파일은 그대로 열린다.
+- **대사 줄의 `fx`**: `say`, `narration` 줄도 같은 `fx` 값(`exclude` 포함)을 가질 수 있다. showpy 대사 탭에서 받아 적고, PyKaki에서는 고치지 않는다. 연결을 켜면 대사 괄호로 내보낸다.
+- **대사 줄의 `say`** (`SayStyle`): `size` `font` `color` `cps` `effect` `name_size` `name_font` `name_color`는 PyKaki에서 고친다. `x` `y` `name_x` `name_y`는 showpy에서 받아 적은 값을 보여 주고 지우기만 한다. 연결을 켜면 짧은 이름으로(`sayArgs`), 끄면 플러그인 없이 동작하는 렌파이 원래 이름(`what_size`, `what_slow_cps`, `what_textshader` 등)으로 내보낸다. 모두 선택 칸이라 예전 파일은 그대로 열린다.
 - **나가는 방식(exit)**:
   - `next` `{ target }`: 다음 상자로
   - `menu` `{ choices: [{ id, text, target, mode:"jump", condition:null, actions:[] }] }`: 선택지
@@ -88,7 +88,7 @@
 ## 5. `.rpy` 내보내기 규칙 (`src/exportRpy.ts`)
 
 1. 머리말 주석과 `define 캐릭터id = Character("이름", color="#...", image="캐릭터id")`. `image`가 있어야 대사 속성(`a smile "..."`)과 `show a smile`이 같은 그림을 쓴다.
-2. 시작: `label start:` → `jump 시작상자`. 단, 이름이 `start`인 label이 있으면 그 label의 첫 상자가 시작 상자여야 하고, 감싸는 label을 만들지 않는다.
+2. 시작: `label start:`를 쓰지 않고 `init python:`에 `config.label_overrides["start"] = 시작상자`를 쓴다. 렌파이 새 프로젝트의 `script.rpy`에도 `label start`가 있어서, 그대로 두고 가는 길만 돌린다. 단, 이름이 `start`인 label이 있으면 그 label의 첫 상자가 시작 상자여야 하고, 이 줄을 쓰지 않는다.
 3. **label 그룹마다 `label 이름:` 하나.** 그룹 안 상자 순서는 다음과 같다.
    - 첫 상자(`entry`)부터 시작해서, `next`나 call의 `then`으로 이어지는 같은 그룹 상자를 바로 뒤에 붙인다.
    - 나머지는 그룹 안에서 너비 우선으로 방문한 순서를 따른다.
@@ -163,7 +163,7 @@
 - **상자 한 번 클릭**: 오른쪽 편집 탭에서 label, 다음 흐름, 시작 상자 등을 설정한다.
 - **줄 순서**: ⠿ 손잡이를 끌어 다른 줄의 위/아래 절반에 놓는다(HTML 드래그 앤 드롭, `useLineDrag`). 상자 안 편집과 편집 탭 모두.
 - **편집 탭 줄 모양**: 줄마다 2칸 격자. 왼쪽 칸(136px)에 손잡이·줄 종류·✕와 대사 속성, 오른쪽 칸에 글(또는 연출 입력칸)을 두고 사이에 세로 선을 긋는다.
-- **대사 설정 카드** (`LineLook`, 연결을 켰을 때): 글 칸에는 글만 둔다. 상자 안 편집에서는 지금 대사 줄 오른쪽 바깥에 붙고, 오른쪽 편집 탭에서는 줄의 [글자] 단추로 패널 왼쪽에 연다(한 번에 한 줄). 글자 모양, 속도, 등장 효과, 좌표, 화면 효과가 들어 있다.
+- **대사 설정 카드** (`LineLook`, 연결과 상관없이): 글 칸에는 글만 둔다. 상자 안 편집에서는 지금 대사 줄 오른쪽 바깥에 붙고, 오른쪽 편집 탭에서는 줄의 [글자] 단추로 패널 왼쪽에 연다(한 번에 한 줄). 글자 모양, 속도, 등장 효과가 들어 있고, 받아 적은 좌표와 화면 효과는 보여 주기만 한다.
 - **Ctrl+Enter**: 같은 화자로 새 줄을 만든다. `flushSync`로 즉시 그려서 바로 이어 쳐도 글자가 새 줄에 들어간다.
 - **빈 곳 더블클릭**: 새 상자를 만든다. label 프레임 안이면 그 label에 넣는다.
 - **선을 빈 곳에 놓기**: 새 상자를 만들어 연결한다. 상자 몸통에 놓으면 그 상자에 연결한다.
@@ -211,11 +211,12 @@
 
 전체 형식은 [LINK.md](LINK.md). `.rpy`를 되읽는 역가져오기는 없다.
 
+- 연결 버튼 `linkProject` (왼쪽 패널): 폴더 고르기, 렌파이 프로젝트인지 확인(`gui.rpy`/`options.rpy`), `ui_kit`이 있으면 `renpyLink` 켜고 없으면 끄기, 이미 다른 `script_flow.rpy`가 있으면 묻기, 첫 내보내기까지 한 번에 한다.
 - 폴더: `showDirectoryPicker`로 `game` 폴더 핸들을 받아 IndexedDB `kv.gameDir`에 둔다. 프로젝트 폴더를 고르면 안의 `game`을 쓴다. 권한은 사용자 동작이 있을 때 다시 얻는다.
-- 목록: `images`, `movies`, `audio`를 읽어 연출 줄 칸의 `datalist`로 보여 준다. 위쪽 폴더의 다른 `.rpy`에 `label start`가 있으면 사이드바에 알린다.
+- 목록: `images`, `movies`, `audio`를 읽어 연출 줄 칸의 `datalist`로 보여 준다. 대본에 이름이 `start`인 label이 있고 위쪽 폴더의 다른 `.rpy`에도 `label start`가 있으면 사이드바에 알린다.
 - 목록과 함께 플레이 화면 값(`look`)과 글꼴 목록도 읽는다. 전체화면에 들어갈 때 다시 읽는다.
 - 받아 적기 `pullInbox`: 창이 다시 focus될 때, 앱을 켤 때, [다시 읽기], 내보내기 직전. 받을 것이 있으면 저장본을 먼저 남기고 `applyInbox`로 넣은 뒤, 읽은 기록만 파일에서 지운다.
-- 내보내기: 연결을 켜면 먼저 받아 적고 `script_flow.rpy`에 쓴다. 받아 적기가 실패하면 쓰지 않는다. 폴더 권한을 못 쓰는 브라우저에서는 예전처럼 내려받기.
+- 내보내기: 폴더를 연결했거나 연결을 켜면 먼저 받아 적고 `script_flow.rpy`에 쓴다. 받아 적기가 실패하면 쓰지 않는다. 폴더 권한을 못 쓰는 브라우저에서는 예전처럼 내려받기.
 - 연결을 켜면 show 줄의 위치 칸을 숨긴다(값이 이미 있을 때만 보임). 위치는 showpy가 저장한다.
 
 ## 9-1. 웹앱 설치 (PWA)

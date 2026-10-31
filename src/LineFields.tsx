@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { ImageKind, Line, LineFx, SayStyle } from './types';
-import { EFFECTS, FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
+import { EFFECTS, FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, fxArgs, stageCode } from './stage';
 import { useGameFolder } from './gameFolder';
 
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
@@ -22,7 +22,8 @@ export function SpeakerSelect({ l, set, className }: { l: Line; set: SetLine; cl
         {l.type === 'say' && !chars.some((c) => c.id === l.who) && <option value={val}>? {l.who}</option>}
       </optgroup>
       <optgroup label="연출">
-        {STAGE_TYPES.map((t) => (
+        {/* 화면 효과는 렌파이 편집기에서 고친다. 예전에 넣은 줄만 그대로 보여 준다 */}
+        {STAGE_TYPES.filter((t) => t !== 'fx' || l.type === 'fx').map((t) => (
           <option key={t} value={t}>{STAGE_LABEL[t]}</option>
         ))}
       </optgroup>
@@ -38,7 +39,7 @@ export function SpeakerSelect({ l, set, className }: { l: Line; set: SetLine; cl
 // 대사 줄과 화면 효과 줄이 함께 쓰는 showpy 값 칸
 export function FxFields({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: string }) {
   const f = l.fx ?? {};
-  const sel = (key: keyof LineFx, items: [string, string][], title: string) => (
+  const sel = (key: Exclude<keyof LineFx, 'exclude'>, items: [string, string][], title: string) => (
     <select
       className={nd}
       title={title}
@@ -73,6 +74,7 @@ export function FxFields({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: stri
 export function SayFields({ l, set }: { l: Line; set: SetLine }) {
   const s = l.say ?? {};
   const fonts = useGameFolder((f) => f.media.fonts);
+  const linked = useStore((v) => !!v.project.settings.renpyLink);
   const put = (key: keyof SayStyle, v: string | number | undefined, mergeKey?: string) =>
     set((x) => {
       const say: SayStyle = { ...(x.say ?? {}) };
@@ -152,19 +154,20 @@ export function SayFields({ l, set }: { l: Line; set: SetLine }) {
           ))}
         </datalist>
       )}
-      {posWhat || posName ? <div className="sf-row">{posWhat}{posName}</div> : <p className="tip">위치는 showpy 편집기의 대사 탭에서 끌어서 정해요.</p>}
+      {posWhat || posName ? <div className="sf-row">{posWhat}{posName}</div> : linked && <p className="tip">위치와 화면 효과는 렌파이 편집기의 대사 탭에서 정해요.</p>}
     </>
   );
 }
 
 // 대사 줄 옆에 붙는 설정 카드. 글 칸에는 글만 남기려고 줄 밖으로 뺐다
-export function LineLook({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: string }) {
+// 화면 효과는 렌파이 편집기에서 고치고, 여기서는 받아 적은 값을 보여 주기만 한다
+export function LineLook({ l, set }: { l: Line; set: SetLine }) {
+  const fx = fxArgs(l.fx);
   return (
     <div className="look">
       <div className="look-title">글자 모양, 속도, 등장 효과</div>
       <SayFields l={l} set={set} />
-      <div className="look-title">화면 효과</div>
-      <div className="sf-row"><FxFields l={l} set={set} nd={nd} /></div>
+      {fx.length > 0 && <div className="sf-pos" title="렌파이 편집기의 대사 탭에서 고쳐요">{fx.join(', ')}</div>}
     </div>
   );
 }

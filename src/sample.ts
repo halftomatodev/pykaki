@@ -16,7 +16,7 @@ const defaults = (): Project => ({
 
 export function createEmpty(): Project {
   const p = defaults();
-  p.labels.push({ id: uid('g'), name: 'chapter_1', title: '1장', color: PALETTE[0], entry: null });
+  p.labels.push({ id: uid('g'), name: 'prologue', title: '프롤로그', color: PALETTE[0], entry: null });
   const id = uid('n');
   p.nodes.push({
     id, group: p.labels[0].id, title: '시작', pos: { x: 0, y: 0 },

@@ -152,7 +152,6 @@ function LineRow({ l, i, upd, drag, lookOpen, setLookOpen }: { l: Line; i: numbe
     useStore.setState({ focusLineId: nl.id });
   };
 
-  const linked = useStore((s) => !!s.project.settings.renpyLink);
   const lookPos = lookOpen?.id === l.id ? lookOpen.style : null;
   const toggleLook = (e: React.MouseEvent<HTMLElement>) => {
     if (lookPos) return setLookOpen(null);
@@ -169,8 +168,8 @@ function LineRow({ l, i, upd, drag, lookOpen, setLookOpen }: { l: Line; i: numbe
         <SpeakerSelect l={l} set={set} />
         <button title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
         {l.type === 'say' && <input className="attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />}
-        {linked && (l.type === 'say' || l.type === 'narration') && (
-          <button className={'look-btn' + (l.say || l.fx ? ' has' : '') + (lookPos ? ' on' : '')} title="글자 모양, 속도, 등장 효과, 화면 효과" onClick={toggleLook}>글자</button>
+        {(l.type === 'say' || l.type === 'narration') && (
+          <button className={'look-btn' + (l.say || l.fx ? ' has' : '') + (lookPos ? ' on' : '')} title="글자 모양, 속도, 등장 효과" onClick={toggleLook}>글자</button>
         )}
       </div>
       <div className="line-body">
