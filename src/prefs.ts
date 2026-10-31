@@ -97,6 +97,7 @@ interface Prefs {
   dim: DimId;
   frameWidth: number; // label 경계선 굵기 (px, 0이면 안 보임)
   grads: Record<GradId, Grad>; // 밝게/어둡게 테마의 두 색
+  textColor: string | null; // 텍스트 색. null이면 테마가 정한 색
 }
 
 const KEY = 'pykaki-prefs';
@@ -105,7 +106,7 @@ const defKeys = () => Object.fromEntries(ACTIONS.map((a) => [a.id, a.def])) as R
 // 처음 값
 const defaults = (): Prefs => ({
   theme: 'apple', custom: { ...THEMES.find((t) => t.id === 'apple')!.colors, box: '#ffffff' }, keys: defKeys(),
-  font: 'default', dim: 'mid', frameWidth: 3, grads: structuredClone(GRAD_DEFAULTS),
+  font: 'default', dim: 'mid', frameWidth: 3, grads: structuredClone(GRAD_DEFAULTS), textColor: null,
 });
 
 function loadPrefs(): Prefs {
@@ -144,7 +145,10 @@ function apply(p: Prefs) {
   const r = document.documentElement;
   r.style.setProperty('--bg', c.bg);
   r.style.setProperty('--panel', c.panel);
-  r.style.setProperty('--text', c.text);
+  r.style.setProperty('--text', p.textColor ?? c.text);
+  r.dataset.textfix = p.textColor ? '1' : '';
+  if (p.textColor) r.style.setProperty('--text-fix', p.textColor);
+  r.dataset.grad = gradOf(p) ? '1' : '';
   r.style.setProperty('--accent', c.accent);
   r.dataset.dark = isDark(c) ? '1' : '';
   r.dataset.mono = isMono(p) ? '1' : '';

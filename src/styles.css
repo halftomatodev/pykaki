@@ -448,7 +448,11 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 /* 상자를 한 가지 색(--fill-c)으로 칠하는 두 경우: 그라데이션·직접 고르기 테마([data-boxfill]), 설정에서 칠한 상자(.own-color, 더 우선).
    글자와 흐린 글자, 선은 그 색 위에서 읽히게 다시 맞춘다 (옆에 붙는 단추·창은 원래 색을 쓰도록 상자 머리/줄/다음 흐름에만) */
 :root[data-boxfill='1'] .box { --fill-c: var(--theme-box); --bt: var(--theme-box-text); }
-:root:not([data-mono='1']) .box.own-color { --fill-c: var(--g); }
+:root:not([data-mono='1']):not([data-grad='1']) .box.own-color { --fill-c: var(--g); --bt: var(--own-bt); }
+/* 밝게/어둡게(그라데이션)에서는 칠한 상자 색을 쓰지 않고 모두 그라데이션을 따른다 */
+/* 텍스트 색을 직접 골랐으면 상자·label 위 글자도 모두 그 색 */
+:root[data-textfix='1'] .box { --bt: var(--text-fix) !important; }
+:root[data-textfix='1'] .frame span { color: var(--text-fix) !important; }
 :root:not([data-mono='1']) .react-flow :is(.box.own-color, [data-boxfill='1'] .box) {
   background: var(--fill-c); border-color: color-mix(in srgb, var(--fill-c) 82%, var(--bt));
 }
@@ -470,3 +474,5 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 /* 설정의 그라데이션 미리보기: label 배경(30%)과 상자(55%) 자리에 눈금 */
 .grad-bar { position: relative; flex: 1; min-width: 120px; height: 14px; border-radius: 7px; border: 1px solid var(--line); }
 .grad-bar i { position: absolute; top: -4px; width: 2px; height: 20px; margin-left: -1px; border-radius: 1px; background: var(--text); }
+fieldset.plain { border: none; margin: 0; padding: 0; min-width: 0; }
+fieldset.plain:disabled { opacity: 0.4; }

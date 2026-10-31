@@ -11,6 +11,7 @@ export function SettingsModal() {
       <div className="modal prefs" onClick={(e) => e.stopPropagation()}>
         <h3>환경 설정</h3>
         <p className="tip">화면 설정은 이 브라우저에만 저장돼요. 상자 색만 대본 파일에 저장돼요.</p>
+        <TextColor />
         <ColorPrefs />
         <LookPrefs />
         <BoxColors />
@@ -31,13 +32,31 @@ export function SettingsModal() {
   );
 }
 
+// 텍스트 색: 어느 테마에서든 고를 수 있다. 자동이면 테마가 밝기에 맞춰 정한다
+function TextColor() {
+  const p = usePrefs();
+  const auto = colorsOf(p).text;
+  return (
+    <>
+      <h4>텍스트 색</h4>
+      <div className="row">
+        <input type="color" className="bc-big" value={p.textColor ?? auto} onChange={(e) => usePrefs.setState({ textColor: e.target.value })} title="눌러서 글자색 고르기" />
+        <button className={'swatch' + (p.textColor ? '' : ' on')} onClick={() => usePrefs.setState({ textColor: null })}>
+          자동 (테마 색)
+        </button>
+        <span className="tip">{p.textColor ? '직접 고른 색을 모든 테마에서 써요.' : '테마가 바탕 밝기에 맞춰 정해요.'}</span>
+      </div>
+    </>
+  );
+}
+
 function ColorPrefs() {
   const p = usePrefs();
   const cur = colorsOf(p);
   const grad = gradOf(p);
   const setCustom = (k: keyof Colors, v: string) => usePrefs.setState({ custom: { ...p.custom, [k]: v } });
   const setGrad = (k: 'a' | 'b', v: string) => grad && usePrefs.setState({ grads: { ...p.grads, [grad]: { ...p.grads[grad], [k]: v } } });
-  const pickers: [keyof Colors, string][] = [['bg', '바탕'], ['panel', '면'], ['box', '상자'], ['text', '텍스트']];
+  const pickers: [keyof Colors, string][] = [['bg', '바탕'], ['panel', '면'], ['box', '상자']];
   const preview = (c: Colors) => ({ background: c.bg, color: c.text, borderColor: c.box ?? c.accent });
   return (
     <>
@@ -75,7 +94,7 @@ function ColorPrefs() {
             </label>
             <button onClick={() => usePrefs.setState({ grads: { ...p.grads, [grad]: { ...GRAD_DEFAULTS[grad] } } })}>처음 색</button>
           </div>
-          <p className="tip">두 색 사이를 이어서 바탕 → label 배경(30%) → 상자(55%) 순서로 자동으로 칠해요. 글자색도 밝기에 맞춰 정해져요.</p>
+          <p className="tip">두 색 사이를 이어서 바탕 → label 배경(30%) → 상자(55%) 순서로 자동으로 칠해요. 이 테마에서는 상자 색을 따로 칠할 수 없어요.</p>
         </>
       )}
       {p.theme === 'custom' && (
@@ -104,6 +123,7 @@ const fullHex = (h: string) => (h.length === 4 ? '#' + [...h.slice(1)].map((x) =
 
 // 상자 색 한꺼번에 바꾸기. 대본 파일에 저장되는 값이라 실행 취소가 된다
 function BoxColors() {
+  const grad = usePrefs((p) => !!gradOf(p));
   const project = useStore((s) => s.project);
   const sel = useStore((s) => s.selectedIds);
   const [target, setTarget] = useState(sel.length ? 'sel' : 'all');
@@ -119,6 +139,8 @@ function BoxColors() {
   return (
     <>
       <h4>상자 색 (이 대본에 저장)</h4>
+      {grad && <p className="tip warn-text">밝게/어둡게 테마에서는 상자가 그라데이션 색을 따라서 칠할 수 없어요. 칠해 둔 색은 다른 테마에서 보여요.</p>}
+      <fieldset className="plain" disabled={grad}>
       <div className="row">
         <label className="pick" htmlFor="bc-target">바꿀 상자</label>
         <select id="bc-target" value={target} onChange={(e) => setTarget(e.target.value)}>
@@ -153,6 +175,7 @@ function BoxColors() {
         <button disabled={!ids.length} onClick={() => paint(undefined)}>label 색으로 되돌리기</button>
       </div>
       <p className="tip">색 칸을 눌러 고르거나 hex 코드(#RRGGBB)를 직접 적어요. 고른 색은 대본 파일에 저장되고 실행 취소(Ctrl+Z)가 돼요.</p>
+      </fieldset>
     </>
   );
 }
