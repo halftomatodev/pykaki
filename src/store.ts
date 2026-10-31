@@ -16,6 +16,7 @@ interface S {
   flash: string | null;
   selectedIds: string[];
   focusLineId: string | null;
+  activeLine: string | null; // 지금 쓰고 있는 줄. 오른쪽 글자 효과 칸이 따라간다
   inlineEdit: string | null; // 상자 안에서 바로 편집 중인 상자 id
   tab: Tab;
   playing: boolean;
@@ -55,6 +56,7 @@ export const useStore = create<S>((set, get) => ({
   flash: null,
   selectedIds: [],
   focusLineId: null,
+  activeLine: null,
   inlineEdit: null,
   tab: 'edit',
   playing: false,

@@ -525,11 +525,8 @@ fieldset.plain:disabled { opacity: 0.4; }
 .link-panel { margin: 4px 0 2px; }
 .link-panel .row { display: flex; gap: 4px; flex-wrap: wrap; }
 .warn-text { color: #b45309; }
-/* 대사 설정 카드: 다음 흐름 창처럼 반투명해서 글 상자보다 눈에 덜 띈다 */
-.side-look, .look-pop { background: color-mix(in srgb, var(--panel) 78%, transparent); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); padding: 6px 8px; }
-.side-look { width: 262px; }
-.look-pop { position: fixed; z-index: 50; width: 262px; }
-.look-close { position: absolute; top: 3px; right: 3px; opacity: .6; }
+/* 글자 효과 칸: 오른쪽 편집 탭 위쪽에 붙어 있어서 줄이 많아 스크롤해도 보인다 */
+.look-panel { position: sticky; top: -12px; z-index: 3; margin: 12px -12px 0; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .look { width: 100%; display: flex; flex-direction: column; gap: 3px; }
 .preview { position: relative; display: flex; align-items: center; height: 84px; padding: 0; background: #15171f; border-radius: 6px; overflow: hidden; cursor: pointer; user-select: none; }
 .preview-text { width: 100%; padding: 0; line-height: 1.25; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; font-family: var(--game-font); }
@@ -538,10 +535,6 @@ fieldset.plain:disabled { opacity: 0.4; }
 .look-title:not(:first-child) { margin-top: 4px; }
 .look .sf-row select { max-width: 92px; }
 .look .tip { margin: 0; font-size: 11px; }
-.look-btn { font-size: 11px; padding: 0 5px; opacity: .55; }
-.look-btn:hover, .look-btn.on { opacity: 1; }
-.look-btn.has { color: var(--accent); opacity: .9; }
-[data-mono='1'] .side-look, [data-mono='1'] .look-pop { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
 .sf-num { width: 68px; }
 .sf-color { display: inline-flex; align-items: center; gap: 1px; }
 .sf-color input[type='color'] { width: 26px; height: 22px; padding: 1px; }

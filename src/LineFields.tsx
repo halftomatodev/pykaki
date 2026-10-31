@@ -160,7 +160,7 @@ export function SayFields({ l, set }: { l: Line; set: SetLine }) {
   );
 }
 
-// 대사 줄 옆에 붙는 설정 카드. 글 칸에는 글만 남기려고 줄 밖으로 뺐다
+// 오른쪽 편집 탭의 글자 효과 칸. 글 칸에는 글만 남기려고 줄 밖으로 뺐고, 집중 모드에서는 패널과 함께 숨는다
 // 화면 효과는 렌파이 편집기에서 고치고, 여기서는 받아 적은 값을 보여 주기만 한다
 export function LineLook({ l, set }: { l: Line; set: SetLine }) {
   const fx = fxArgs(l.fx);
