@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { connectFolder, disconnectFolder, hasDirPicker, pullInbox, scanFolder, useGameFolder } from './gameFolder';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { Character, LabelGroup } from './types';
@@ -55,11 +56,34 @@ export function Sidebar() {
           </label>
           <label>
             <input type="checkbox" checked={project.settings.escapePercent} onChange={(e) => update((p) => void (p.settings.escapePercent = e.target.checked))} />
-            % 를 %% 로 변환 (옛 버전용)
+            % 를 글자 그대로 (%% 로 변환)
           </label>
+          <label>
+            <input type="checkbox" checked={!!project.settings.renpyLink} onChange={(e) => update((p) => void (p.settings.renpyLink = e.target.checked))} />
+            showpy 플러그인 연결
+          </label>
+          {project.settings.renpyLink && <LinkPanel />}
         </div>
       )}
     </aside>
+  );
+}
+
+// showpy 연결: 렌파이 game 폴더를 잇는 칸
+function LinkPanel() {
+  const f = useGameFolder();
+  if (!hasDirPicker) return <p className="tip">폴더 연결은 크롬과 엣지에서 돼요. 이 브라우저에서는 내려받은 script_flow.rpy를 game 폴더에 넣어 주세요. showpy에서 넣은 줄은 받아 적지 못해요.</p>;
+  return (
+    <div className="link-panel">
+      <p className="tip">{f.name ? `연결한 폴더: ${f.name}` : 'Ctrl+E로 쓸 렌파이 game 폴더를 연결해 주세요.'}</p>
+      <div className="row">
+        <button onClick={() => void connectFolder()}>{f.name ? '폴더 바꾸기' : '폴더 연결'}</button>
+        {f.name && <button onClick={() => void pullInbox(true).then(() => scanFolder())}>다시 읽기</button>}
+        {f.name && <button onClick={() => void disconnectFolder()}>끊기</button>}
+      </div>
+      {f.name && <p className="tip">그림과 영상 {f.media.images.length}개, 소리 {f.media.audio.length}개를 찾았어요.</p>}
+      {f.startClash && <p className="tip warn-text">{f.startClash}에도 label start가 있어요. 렌파이가 오류를 내니 그 파일의 label start를 지워 주세요.</p>}
+    </div>
   );
 }
 

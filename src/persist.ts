@@ -39,3 +39,13 @@ export const snapList = async () =>
   ((await run<Snapshot[]>('snapshots', 'readonly', (s) => s.getAll())) ?? []).sort((a, b) => b.time - a.time);
 
 export const snapDelete = (id: string) => run('snapshots', 'readwrite', (s) => s.delete(id));
+
+// 자동으로 남긴 저장본은 최근 것만 둔다. 사용자가 직접 남긴 버전은 안 지운다
+export const AUTO_MEMO = '자동 저장';
+const AUTO_KEEP = 30;
+
+export async function snapAuto(memo: string, project: Project) {
+  await snapAdd(memo, project);
+  const autos = (await snapList()).filter((v) => v.memo === AUTO_MEMO || v.memo === '내보내기');
+  await Promise.all(autos.slice(AUTO_KEEP).map((v) => snapDelete(v.id)));
+}

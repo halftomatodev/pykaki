@@ -3,7 +3,8 @@ import '@xyflow/react/dist/style.css';
 import './styles.css';
 import { App } from './App';
 import { useStore } from './store';
-import { kvGet, kvSet } from './persist';
+import { AUTO_MEMO, kvGet, kvSet, snapAuto } from './persist';
+import { folderReady, pullInbox, restoreFolder } from './gameFolder';
 import { createSample, normalizeProject } from './sample';
 
 async function boot() {
@@ -39,6 +40,21 @@ async function boot() {
       }
     }, 700);
   });
+
+  // 저장본: 바뀐 것이 있으면 5분마다 남긴다
+  let lastSnap = useStore.getState().project;
+  setInterval(() => {
+    const cur = useStore.getState().project;
+    if (cur === lastSnap) return;
+    lastSnap = cur;
+    snapAuto(AUTO_MEMO, cur).catch((e) => console.warn('자동 저장본 실패', e));
+  }, 5 * 60 * 1000);
+
+  // 렌파이에서 돌아오면 showpy가 넣은 줄을 바로 대본에 보여 준다
+  await restoreFolder();
+  const pull = () => void (folderReady() && pullInbox().catch((e) => console.warn('받아 적기 실패', e)));
+  window.addEventListener('focus', pull);
+  pull();
 
   window.addEventListener('beforeunload', (e) => {
     if (useStore.getState().dirty) {

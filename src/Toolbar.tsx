@@ -80,7 +80,7 @@ function Versions({ onClose }: { onClose: () => void }) {
     const s = useStore.getState();
     await snapAdd('복원 전 자동 백업', s.project);
     s.load(structuredClone(v.project), { dirty: true });
-    s.say(`"${v.memo}" 버전으로 되돌렸어요`);
+    s.say(`"${v.memo}" 버전으로 되돌렸어요. Ctrl+E로 내보내면 렌파이도 따라가요`);
     onClose();
   };
 

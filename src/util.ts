@@ -11,6 +11,13 @@ export const RESERVED = new Set([
   'menu', 'jump', 'call', 'label', 'scene', 'show', 'hide', 'play', 'stop', 'queue', 'define', 'default',
 ]);
 
+// showpy 연결을 켜면 캐릭터 id로 못 쓰는 이름 (플러그인이 쓰는 변수와 겹침)
+export const PLUGIN_NAMES = new Set([
+  'ui_kit', 'tmenu', 'cmenu', 'custom_ui', 'say_style', 'stage', 'script_edit', 'ui_editor',
+  'screen_fx', 'vhs_crt', 'ascii', 'retro_term', 'gameboy', 'watermorph', 'hotkeys', 'splash',
+  't', 'n1', 'n2', 'n3',
+]);
+
 export const PALETTE = [
   '#dbeafe', '#dcfce7', '#fef3c7', '#fce7f3', '#ede9fe',
   '#ffedd5', '#cffafe', '#e2e8f0', '#fee2e2', '#ecfccb',

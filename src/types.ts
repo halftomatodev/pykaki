@@ -1,7 +1,16 @@
 // 프로젝트 저장 파일(JSON)의 구조. 설계 문서 5장 참고.
 
 // scene/show/hide/music/sound는 렌파이 명령을 몰라도 칸만 채우면 되는 연출 줄
-export type LineType = 'narration' | 'say' | 'scene' | 'show' | 'hide' | 'music' | 'sound' | 'command' | 'note';
+export type LineType = 'narration' | 'say' | 'scene' | 'show' | 'hide' | 'music' | 'sound' | 'fx' | 'command' | 'note';
+
+// showpy 화면 효과 값. 대사 줄은 괄호로, 연출 줄(fx)은 명령으로 내보낸다. 빈 칸은 안 내보낸다
+export interface LineFx {
+  fx?: string; // ascii | retro_term | gameboy | none | default
+  transition?: string; // tv | fade | none
+  overlay?: string; // on | off
+  warp?: string; // 0~5 | default
+  cursor?: string; // effect | overlay | top | default
+}
 
 export type ImageKind = 'char' | 'bg' | 'etc';
 
@@ -17,6 +26,7 @@ export interface Line {
   trans?: string; // scene/show/hide: dissolve | fade (비우면 바로)
   file?: string; // music/sound: 파일 이름
   stop?: boolean; // music: 멈추기
+  fx?: LineFx; // say, narration, fx 줄 (showpy 연결을 켰을 때만 내보낸다)
 }
 
 export interface Choice {
@@ -64,6 +74,7 @@ export interface Settings {
   escapeBrackets: boolean; // [ → [[
   allowTextTags: boolean; // false면 { → {{
   escapePercent: boolean; // % → %%
+  renpyLink: boolean; // showpy 연결: 상자마다 label, 줄 표시, 플러그인 문법을 내보낸다
 }
 
 export interface Project {

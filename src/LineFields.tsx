@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
-import type { ImageKind, Line } from './types';
-import { POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
+import type { ImageKind, Line, LineFx } from './types';
+import { FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
+import { useGameFolder } from './gameFolder';
 
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
 
@@ -34,18 +35,77 @@ export function SpeakerSelect({ l, set, className }: { l: Line; set: SetLine; cl
 }
 
 // 연출 줄의 입력칸. 명령을 몰라도 고르고 채우기만 하면 된다
+// 대사 줄과 화면 효과 줄이 함께 쓰는 showpy 값 칸
+export function FxFields({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: string }) {
+  const f = l.fx ?? {};
+  const sel = (key: keyof LineFx, items: [string, string][], title: string) => (
+    <select
+      className={nd}
+      title={title}
+      value={f[key] ?? ''}
+      onChange={(e) =>
+        set((x) => {
+          const v = { ...(x.fx ?? {}) };
+          if (e.target.value) v[key] = e.target.value;
+          else delete v[key];
+          if (Object.keys(v).length) x.fx = v;
+          else delete x.fx;
+        })
+      }
+    >
+      {items.map(([k, t]) => (
+        <option key={k} value={k}>{t}</option>
+      ))}
+    </select>
+  );
+  return (
+    <>
+      {sel('fx', FX_BASE, '화면 효과')}
+      {sel('transition', FX_TRANS, '전환')}
+      {sel('overlay', FX_OVERLAY, 'VHS 덮개')}
+      {sel('warp', FX_WARP, '덮개 휘어짐')}
+      {sel('cursor', FX_CURSOR, '커서 자리')}
+    </>
+  );
+}
+
+// 연결한 game 폴더의 파일 이름을 칸의 추천 목록으로
+function useSuggest(l: Line) {
+  const media = useGameFolder((s) => s.media);
+  const chars = useStore((s) => s.project.characters);
+  const words = (n: string) => n.split(' ');
+  const bg = media.images.filter((n) => words(n)[0] === 'bg' && words(n).length > 1).map((n) => words(n).slice(1).join(' '));
+  const attr = media.images.filter((n) => words(n)[0] === l.who && words(n).length > 1).map((n) => words(n).slice(1).join(' '));
+  const etc = media.images.filter((n) => words(n)[0] !== 'bg' && !chars.some((c) => c.id === words(n)[0]));
+  return { bg, attr, etc, audio: media.audio };
+}
+
 export function StageFields({ l, set, firstId, nd = '' }: { l: Line; set: SetLine; firstId?: string; nd?: string }) {
   const chars = useStore((s) => s.project.characters);
+  const linked = useStore((s) => !!s.project.settings.renpyLink);
+  const sug = useSuggest(l);
   const kind = l.kind ?? 'char';
   const { code, problem } = stageCode(l);
+  const listId = (k: string) => (useGameFolder.getState().name ? `sug-${k}-${l.id}` : undefined);
   const field = (k: 'image' | 'attr' | 'file', placeholder: string, id?: string, cls = '') => (
-    <input id={id} className={nd + ' sf-in ' + cls} placeholder={placeholder} value={l[k] ?? ''} onChange={(e) => set((x) => void (x[k] = e.target.value), k + l.id)} />
+    <>
+      <input id={id} list={listId(k)} className={nd + ' sf-in ' + cls} placeholder={placeholder} value={l[k] ?? ''} onChange={(e) => set((x) => void (x[k] = e.target.value), k + l.id)} />
+      {listId(k) && (
+        <datalist id={listId(k)}>
+          {(k === 'file' ? sug.audio : k === 'attr' ? sug.attr : l.type === 'scene' || kind === 'bg' ? sug.bg : sug.etc).map((n) => (
+            <option key={n} value={n} />
+          ))}
+        </datalist>
+      )}
+    </>
   );
   const pick = (items: [string, string][], v: string | undefined, fn: (x: Line, v: string) => void, title: string) => (
     <select className={nd} title={title} value={v ?? ''} onChange={(e) => set((x) => fn(x, e.target.value))}>
       {items.map(([k, t]) => (
         <option key={k} value={k}>{t}</option>
       ))}
+      {/* showpy에서 넣은 전환(stage.move 등)처럼 목록에 없는 값도 그대로 보여 준다 */}
+      {v && !items.some(([k]) => k === v) && <option value={v}>{v}</option>}
     </select>
   );
   const kindSel = pick([['char', '캐릭터'], ['bg', '배경'], ['etc', '기타']], kind, (x, v) => void (x.kind = v as ImageKind), '이미지 종류');
@@ -67,7 +127,8 @@ export function StageFields({ l, set, firstId, nd = '' }: { l: Line; set: SetLin
       <>
         {kindSel}
         {kind === 'char' ? <>{charSel}{field('attr', '표정 (예: smile)', undefined, 'short')}</> : field('image', kind === 'bg' ? '배경 이름 (예: room)' : '이미지 이름', firstId)}
-        {pick(POSITIONS, l.at, (x, v) => void (x.at = v || undefined), '위치')}
+        {/* showpy 연결을 켜면 위치는 렌파이 편집기에서만 정한다. 예전에 적은 값만 지울 수 있게 보여 준다 */}
+        {(!linked || l.at) && pick(POSITIONS, l.at, (x, v) => void (x.at = v || undefined), '위치')}
         {trans}
       </>
     );
@@ -79,6 +140,7 @@ export function StageFields({ l, set, firstId, nd = '' }: { l: Line; set: SetLin
         {trans}
       </>
     );
+  else if (l.type === 'fx') body = <FxFields l={l} set={set} nd={nd} />;
   else if (l.type === 'music')
     body = (
       <>

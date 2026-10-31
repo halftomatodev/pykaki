@@ -2,7 +2,8 @@
 import { useStore } from './store';
 import { createEmpty, normalizeProject } from './sample';
 import { generateRpy } from './exportRpy';
-import { snapAdd } from './persist';
+import { snapAdd, snapAuto } from './persist';
+import { connectFolder, folderAllowed, folderReady, hasDirPicker, pullInbox, RPY_FILE, scanFolder, writeRpyToFolder } from './gameFolder';
 
 const w = window as any;
 const hasFS = typeof w.showSaveFilePicker === 'function';
@@ -97,7 +98,24 @@ export async function newProject() {
 }
 
 export async function exportRpyFile(again = false) {
-  const s = useStore.getState();
+  let s = useStore.getState();
+  // showpy 연결: 연결한 폴더의 script_flow.rpy에 바로 쓴다. 쓰기 전에 showpy가 넣은 줄부터 받아 적어야 안 사라진다
+  const toFolder = s.project.settings.renpyLink && hasDirPicker;
+  if (toFolder) {
+    if (!folderReady() && !(await connectFolder())) return;
+    if (!(await folderAllowed(true))) {
+      alert('렌파이 폴더에 쓸 권한이 없어요. 권한을 허용해 주세요.');
+      return;
+    }
+    try {
+      await pullInbox(true);
+      await scanFolder();
+    } catch (e: any) {
+      alert('showpy가 넣은 줄을 받아 적지 못해서 내보내기를 멈췄어요: ' + e.message);
+      return;
+    }
+    s = useStore.getState();
+  }
   const { code, warnings } = generateRpy(s.project);
   const errors = warnings.filter((x) => x.level === 'error').length;
   if (errors && !confirm(`오류 ${errors}개가 있어요. 이대로 내보내면 렌파이에서 실행이 안 될 수 있어요. 계속할까요?`)) {
@@ -105,7 +123,11 @@ export async function exportRpyFile(again = false) {
     return;
   }
   try {
-    if (hasFS) {
+    if (toFolder) {
+      await snapAuto('내보내기', s.project).catch(() => {});
+      await writeRpyToFolder(code);
+      s.say(`${RPY_FILE}로 내보냈어요. 렌파이가 바로 다시 불러와요 (자동 불러오기는 렌파이에서 Shift+R)`);
+    } else if (hasFS) {
       if (!rpyHandle || !again)
         rpyHandle = await w.showSaveFilePicker({
           suggestedName: rpyHandle?.name ?? 'script_flow.rpy',

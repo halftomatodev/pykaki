@@ -3,7 +3,7 @@ import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, ExitType, Line, Project } from './types';
 import { uid } from './util';
-import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { FxFields, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage } from './stage';
 import { hit, keyOf, usePrefs } from './prefs';
 
@@ -148,6 +148,7 @@ function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: Retu
     useStore.setState({ focusLineId: nl.id });
   };
 
+  const linked = useStore((s) => !!s.project.settings.renpyLink);
   const placeholder = ({ narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' } as Record<string, string>)[l.type];
 
   return (
@@ -163,6 +164,12 @@ function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: Retu
           <StageFields l={l} set={set} />
         ) : (
           <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
+        )}
+        {linked && (l.type === 'say' || l.type === 'narration') && (
+          <details className="line-fx" open={!!l.fx}>
+            <summary>화면 효과</summary>
+            <div className="sf-row"><FxFields l={l} set={set} /></div>
+          </details>
         )}
       </div>
     </div>

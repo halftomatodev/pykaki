@@ -477,3 +477,10 @@ input[type='color'].bc-big::-webkit-color-swatch { border-radius: 6px; }
 .grad-bar i { position: absolute; top: -4px; width: 2px; height: 20px; margin-left: -1px; border-radius: 1px; background: var(--text); }
 fieldset.plain { border: none; margin: 0; padding: 0; min-width: 0; }
 fieldset.plain:disabled { opacity: 0.4; }
+
+/* showpy 연결 */
+.link-panel { margin: 4px 0 2px; }
+.link-panel .row { display: flex; gap: 4px; flex-wrap: wrap; }
+.warn-text { color: #b45309; }
+.line-fx summary { cursor: pointer; font-size: 11px; opacity: .65; }
+.line-fx .sf-row select { max-width: 92px; }

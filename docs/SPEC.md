@@ -48,7 +48,7 @@
   "variables": [],                          // 2단계(플래그)용 자리
   "labels": [{ "id": "g1", "name": "scene_rain", "title": "비 오는 날", "color": "#dbeafe", "entry": "n1" }],
   "layout": { "direction": "TB" },          // TB | LR
-  "settings": { "escapeBrackets": true, "allowTextTags": true, "escapePercent": false },
+  "settings": { "escapeBrackets": true, "allowTextTags": true, "escapePercent": true, "renpyLink": false },
   "nodes": [{
     "id": "n1", "group": "g1", "title": "도입", "pos": { "x": 0, "y": 0 }, "color": "#ff9500", // color는 없어도 됨
     "lines": [
@@ -72,7 +72,9 @@
   - `show` `{ kind, who, attr, image, at, trans }`: `kind`는 `char`(who+attr) | `bg`(image) | `etc`(image), 위치 `left`/`right`(비우면 가운데)
   - `hide` `{ kind, who, image, trans }`
   - `music` `{ file, stop }`, `sound` `{ file }`
-  - `trans`는 `dissolve` | `fade` | 비움. 모두 선택 칸이라 예전 파일은 그대로 열린다.
+  - `fx` `{ fx: { fx, transition, overlay, warp, cursor } }`: showpy 화면 효과 명령. 값은 `src/stage.ts`의 `FX_*`
+  - `trans`는 `dissolve` | `fade` | 비움, 또는 showpy에서 받아 적은 식(`stage.move("inleft", 0.8)` 등). 모두 선택 칸이라 예전 파일은 그대로 열린다.
+- **대사 줄의 `fx`**: `say`, `narration` 줄도 같은 `fx` 값을 가질 수 있다. 연결을 켜면 대사 괄호로 내보낸다.
 - **나가는 방식(exit)**:
   - `next` `{ target }`: 다음 상자로
   - `menu` `{ choices: [{ id, text, target, mode:"jump", condition:null, actions:[] }] }`: 선택지
@@ -112,6 +114,13 @@
     - 연결 안 된 선
     - 시작에서 도달할 수 없는 상자
     - call 대상에서 return에 도달하지 않음
+    - `escapePercent`가 꺼졌는데 대사나 선택지에 `%`가 있음 (오류. 렌파이가 실행 중 멈춘다)
+    - 연결을 켰는데 캐릭터 id가 showpy 이름과 겹침 (오류, `PLUGIN_NAMES`)
+11. **showpy 연결(`renpyLink`)을 켜면 달라지는 것**. 끄면 예전과 똑같이 내보낸다.
+    - 모든 상자에 `label 그룹.상자id:`를 쓴다. 첫 상자는 `label 그룹:` 바로 아래에 이어 쓴다.
+    - 줄마다 앞에 `# @l:줄id`, 나가는 부분 앞에 `# @end:상자id`를 쓴다.
+    - 대사 괄호(`fx=` 등)와 `fx` 줄을 내보낸다. 끄면 `fx` 줄은 주석이 되고 경고가 뜬다.
+    - 형식은 [LINK.md](LINK.md).
 
 ## 6. 자동 정렬 (`src/layout.ts`)
 
@@ -185,10 +194,21 @@
 | 자동 저장 | 변경 0.7초 뒤 | IndexedDB `renpy-flow-editor` / `kv.current` |
 | 버전 스냅샷 | [버전 저장], 열기/새로/복원 직전 자동 | IndexedDB `snapshots` |
 | 파일 | Ctrl+S, `.flow.json` | 사용자 폴더 (진짜 백업) |
-| `.rpy` | 내보내기, 핸들 기억 → Ctrl+E로 같은 곳 | 게임 `game/` 폴더 권장 |
+| 자동 저장본 | 바뀐 것이 있으면 5분마다, 연결 내보내기 때. 최근 30개만 둠 | IndexedDB `snapshots` |
+| `.rpy` | 내보내기, 핸들 기억 → Ctrl+E로 같은 곳. 연결을 켜면 연결한 폴더의 `script_flow.rpy` | 게임 `game/` 폴더 권장 |
 
 - 파일로 저장하지 않은 변경이 있으면 탭을 닫을 때 경고한다.
 - 사이트와 로컬 `dist/index.html`은 출처(origin)가 달라서 자동 저장 공간이 따로다.
+
+## 9-0. showpy 연결 (`src/gameFolder.ts`, `src/inbox.ts`)
+
+전체 형식은 [LINK.md](LINK.md). `.rpy`를 되읽는 역가져오기는 없다.
+
+- 폴더: `showDirectoryPicker`로 `game` 폴더 핸들을 받아 IndexedDB `kv.gameDir`에 둔다. 프로젝트 폴더를 고르면 안의 `game`을 쓴다. 권한은 사용자 동작이 있을 때 다시 얻는다.
+- 목록: `images`, `movies`, `audio`를 읽어 연출 줄 칸의 `datalist`로 보여 준다. 위쪽 폴더의 다른 `.rpy`에 `label start`가 있으면 사이드바에 알린다.
+- 받아 적기 `pullInbox`: 창이 다시 focus될 때, 앱을 켤 때, [다시 읽기], 내보내기 직전. 받을 것이 있으면 저장본을 먼저 남기고 `applyInbox`로 넣은 뒤, 읽은 기록만 파일에서 지운다.
+- 내보내기: 연결을 켜면 먼저 받아 적고 `script_flow.rpy`에 쓴다. 받아 적기가 실패하면 쓰지 않는다. 폴더 권한을 못 쓰는 브라우저에서는 예전처럼 내려받기.
+- 연결을 켜면 show 줄의 위치 칸을 숨긴다(값이 이미 있을 때만 보임). 위치는 showpy가 저장한다.
 
 ## 9-1. 웹앱 설치 (PWA)
 
@@ -208,6 +228,8 @@
 | `src/persist.ts` | IndexedDB |
 | `src/files.ts` | 파일 열기/저장/`.rpy` 내보내기 |
 | `src/exportRpy.ts` | `.rpy` 변환과 검사 |
+| `src/gameFolder.ts` | 렌파이 game 폴더 연결, 목록, 받아 적기 파일 읽기와 쓰기 |
+| `src/inbox.ts` | showpy가 남긴 줄을 대본에 넣기 |
 | `src/stage.ts` | 연출 줄 → 렌파이 명령 |
 | `src/LineFields.tsx` | 줄 종류 선택, 연출 줄 입력칸, 줄 끌어 옮기기 |
 | `src/layout.ts` | 자동 정렬 |
@@ -236,6 +258,5 @@
   - 조건 분기 상자 → `if/elif/else` + `jump`
   - 플레이에서 변수 보기와 바꾸기
 - **3단계**:
-  - `# @node:` 주석으로 `.rpy` 대사 수정분 다시 가져오기
   - 플레이에서 이미지 간이 표시
-- **미검증**: 내보낸 `.rpy`를 실제 렌파이에서 실행해 보지 않았다(특히 로컬 label `label 그룹.id:` 형식).
+- **확인됨**: 내보낸 `.rpy`가 렌파이 8.5.3에서 실행된다(로컬 label 포함). 연결 쪽 확인 상태는 [LINK.md](LINK.md) 6장.

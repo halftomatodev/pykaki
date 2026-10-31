@@ -102,7 +102,7 @@ export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   );
 });
 
-const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: '🙈', music: '🎵', sound: '🔊' };
+const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: '🙈', music: '🎵', sound: '🔊', fx: '✨' };
 
 function Lines({ b, editing }: { b: BoxNode; editing: boolean }) {
   const update = useStore((s) => s.update);

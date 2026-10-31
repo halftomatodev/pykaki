@@ -10,7 +10,7 @@ const defaults = (): Project => ({
   variables: [],
   labels: [],
   layout: { direction: 'TB' },
-  settings: { escapeBrackets: true, allowTextTags: true, escapePercent: false },
+  settings: { escapeBrackets: true, allowTextTags: true, escapePercent: true, renpyLink: false },
   nodes: [],
 });
 

@@ -1,8 +1,8 @@
 // 프로젝트 → .rpy 변환과 검사. 설계 문서 6장 참고.
 import type { BoxNode, LabelGroup, Line, Project, Settings } from './types';
 import { exitLinks, fallTarget } from './ops';
-import { IDENT, RESERVED } from './util';
-import { badImageName, isStage, stageCode } from './stage';
+import { IDENT, PLUGIN_NAMES, RESERVED } from './util';
+import { badImageName, fxArgs, isStage, stageCode } from './stage';
 
 export interface Warn { level: 'error' | 'warn'; msg: string; nodeId?: string }
 
@@ -52,6 +52,9 @@ function orderGroup(p: Project, g: LabelGroup, byId: Map<string, BoxNode>): BoxN
   return out;
 }
 
+// 번역 문자열로 해석되어 멈추는 % (%% 는 괜찮다)
+const loosePercent = (t: string) => /%/.test(t.replace(/%%/g, ''));
+
 export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
   const W: Warn[] = [];
   const out: string[] = [];
@@ -73,6 +76,7 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
   for (const c of p.characters) {
     if (!IDENT.test(c.id) || RESERVED.has(c.id)) W.push({ level: 'error', msg: `캐릭터 id "${c.id}"는 쓸 수 없어요` });
     if (cids.has(c.id)) W.push({ level: 'error', msg: `캐릭터 id "${c.id}"가 중복돼요` });
+    if (S.renpyLink && PLUGIN_NAMES.has(c.id)) W.push({ level: 'error', msg: `캐릭터 id "${c.id}"는 showpy가 쓰는 이름과 겹쳐요. 다른 이름으로 바꿔 주세요` });
     cids.add(c.id);
   }
 
@@ -126,10 +130,15 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
       const onlyFall = prev && inc.length === 1 && inc[0].from === prev.id && fallTarget(prev) === b.id;
       out.push(`# @node:${b.id}${b.title ? ' ' + oneLine(b.title) : ''}`);
       if (i === 0) out.push(`label ${g.name}:`);
-      else if (!onlyFall) out.push(`label ${g.name}.${b.id}:`);
+      // 연결을 켜면 showpy가 지금 상자를 알 수 있게 모든 상자에 label을 쓴다
+      if (S.renpyLink || (i !== 0 && !onlyFall)) out.push(`label ${g.name}.${b.id}:`);
 
       const body: string[] = [];
+      const pct = (t: string, where: string) => {
+        if (!S.escapePercent && loosePercent(t)) W.push({ level: 'error', msg: `${where}의 %에서 렌파이가 멈춰요. 설정에서 "% 를 글자 그대로"를 켜 주세요 (${b.title || b.id})`, nodeId: b.id });
+      };
       const lineOut = (l: Line) => {
+        if (S.renpyLink) body.push(`# @l:${l.id}`); // showpy가 줄을 찾는 표시
         if (l.type === 'note') return l.text.split('\n').forEach((x) => body.push('# ' + x));
         if (l.type === 'command') return l.text.split('\n').forEach((x) => x.trim() && body.push(x.trimEnd()));
         if (isStage(l.type)) {
@@ -138,21 +147,30 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
           if (badImageName(l)) W.push({ level: 'warn', msg: `이미지 이름은 영문·숫자·_·-로 쓰는 게 안전해요 (${b.title || b.id})`, nodeId: b.id });
           if (l.who && (l.kind ?? 'char') === 'char' && l.type !== 'scene' && !charById.has(l.who))
             W.push({ level: 'error', msg: `등록되지 않은 캐릭터 "${l.who}" (${b.title || b.id})`, nodeId: b.id });
-          return body.push(code ?? `# TODO: ${problem}`);
+          if (l.type === 'fx' && !S.renpyLink) {
+            W.push({ level: 'warn', msg: `화면 효과 줄은 showpy 연결을 켜야 내보내요 (${b.title || b.id})`, nodeId: b.id });
+            return body.push(`# showpy 연결 꺼짐: ${(code ?? '').split('\n')[0]}`);
+          }
+          return body.push(...(code ?? `# TODO: ${problem}`).split('\n'));
         }
         if (!l.text.trim()) W.push({ level: 'warn', msg: `빈 대사가 있어요 (${b.title || b.id})`, nodeId: b.id });
-        if (l.type === 'narration') return body.push(q(l.text));
+        pct(l.text, '대사');
+        // 대사 괄호는 플러그인이 받는다. 플러그인이 없으면 오류가 나서 연결을 켰을 때만 쓴다
+        const fa = S.renpyLink ? fxArgs(l.fx) : [];
+        const tail = fa.length ? ` (${fa.join(', ')})` : '';
+        if (l.type === 'narration') return body.push(q(l.text) + tail);
         const c = l.who ? charById.get(l.who) : undefined;
         if (!c) {
           W.push({ level: 'error', msg: `등록되지 않은 화자 "${l.who ?? ''}" (${b.title || b.id})`, nodeId: b.id });
           body.push(`# 화자 없음: ${l.who ?? ''}`, q(l.text));
-        } else body.push(`${c.id}${l.attr?.trim() ? ' ' + l.attr.trim() : ''} ${q(l.text)}`);
+        } else body.push(`${c.id}${l.attr?.trim() ? ' ' + l.attr.trim() : ''} ${q(l.text)}${tail}`);
       };
       b.lines.forEach(lineOut);
 
       const todo = 'return  # TODO: 연결 안 됨';
       const flow = (t: string | null) => (!t ? [todo] : t === nextId ? [] : [`jump ${ref(t)}`]);
       const e = b.exit;
+      if (S.renpyLink) body.push(`# @end:${b.id}`); // 상자 끝 (showpy가 선택지 앞에 줄을 넣을 때)
       if (e.type === 'next') {
         if (!e.target) W.push({ level: 'warn', msg: `다음 흐름이 연결되지 않았어요 (${b.title || b.id})`, nodeId: b.id });
         body.push(...flow(e.target));
@@ -164,6 +182,7 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
           body.push('menu:');
           for (const c of e.choices) {
             if (!c.text.trim()) W.push({ level: 'warn', msg: `선택지 문구가 비어 있어요 (${b.title || b.id})`, nodeId: b.id });
+            pct(c.text, '선택지');
             body.push(`${I}${q(c.text)}:`);
             if (!c.target) W.push({ level: 'warn', msg: `선택지 "${c.text}"가 연결되지 않았어요`, nodeId: b.id });
             body.push(I + I + (c.target ? `jump ${ref(c.target)}` : todo));
