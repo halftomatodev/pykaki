@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
-import type { ImageKind, Line, LineFx } from './types';
-import { FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
+import type { ImageKind, Line, LineFx, SayStyle } from './types';
+import { EFFECTS, FX_BASE, FX_CURSOR, FX_OVERLAY, FX_TRANS, FX_WARP, POSITIONS, STAGE_LABEL, STAGE_TYPES, TRANSITIONS, stageCode } from './stage';
 import { useGameFolder } from './gameFolder';
 
 type SetLine = (fn: (x: Line) => void, key?: string) => void;
@@ -66,6 +66,106 @@ export function FxFields({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: stri
       {sel('warp', FX_WARP, '덮개 휘어짐')}
       {sel('cursor', FX_CURSOR, '커서 자리')}
     </>
+  );
+}
+
+// 대사 줄의 글자 모양 칸. 위치는 showpy 편집기에서 받아 적은 값을 보여 주기만 한다
+export function SayFields({ l, set }: { l: Line; set: SetLine }) {
+  const s = l.say ?? {};
+  const fonts = useGameFolder((f) => f.media.fonts);
+  const put = (key: keyof SayStyle, v: string | number | undefined, mergeKey?: string) =>
+    set((x) => {
+      const say: SayStyle = { ...(x.say ?? {}) };
+      if (v === undefined || v === '') delete say[key];
+      else (say as Record<string, unknown>)[key] = v;
+      if (Object.keys(say).length) x.say = say;
+      else delete x.say;
+    }, mergeKey);
+  const num = (key: 'size' | 'cps' | 'name_size', placeholder: string, title: string, max: number) => (
+    <input
+      type="number"
+      className="sf-num"
+      min={1}
+      max={max}
+      title={title}
+      placeholder={placeholder}
+      value={s[key] ?? ''}
+      onChange={(e) => {
+        const n = Math.round(Number(e.target.value));
+        put(key, n > 0 ? Math.min(n, max) : undefined, key + l.id);
+      }}
+    />
+  );
+  const color = (key: 'color' | 'name_color', title: string) => (
+    <span className="sf-color">
+      <input type="color" title={title} value={s[key] ?? '#ffffff'} onChange={(e) => put(key, e.target.value, key + l.id)} />
+      {s[key] && <button title={title + ' 지우기'} onClick={() => put(key, undefined)}>✕</button>}
+    </span>
+  );
+  const font = (key: 'font' | 'name_font', placeholder: string) => (
+    <input className="sf-in" list={fonts.length ? `sug-fonts-${l.id}` : undefined} placeholder={placeholder} value={s[key] ?? ''} onChange={(e) => put(key, e.target.value.trim(), key + l.id)} />
+  );
+  const pos = (x: 'x' | 'name_x', y: 'y' | 'name_y', what: string) =>
+    s[x] !== undefined || s[y] !== undefined ? (
+      <span className="sf-pos" title={`showpy 편집기에서 정한 ${what} 위치예요. 대사창 왼쪽 위 기준이에요.`}>
+        {what} 위치 {s[x] ?? '-'}, {s[y] ?? '-'}
+        <button
+          title="위치 지우기"
+          onClick={() =>
+            set((v) => {
+              const say: SayStyle = { ...(v.say ?? {}) };
+              delete say[x];
+              delete say[y];
+              if (Object.keys(say).length) v.say = say;
+              else delete v.say;
+            })
+          }
+        >✕</button>
+      </span>
+    ) : null;
+  const posWhat = pos('x', 'y', '대사');
+  const posName = pos('name_x', 'name_y', '이름');
+  return (
+    <>
+      <div className="sf-row">
+        {num('size', '크기', '글자 크기', 200)}
+        {num('cps', '글자/초', '1초에 나오는 글자 수. 비우면 게임 설정을 따라요', 500)}
+        <select title="등장 효과" value={s.effect ?? ''} onChange={(e) => put('effect', e.target.value)}>
+          {EFFECTS.map(([k, t]) => (
+            <option key={k} value={k}>{t}</option>
+          ))}
+        </select>
+        {color('color', '글자 색')}
+        {font('font', '글꼴 파일')}
+      </div>
+      {l.type === 'say' && (
+        <div className="sf-row">
+          {num('name_size', '이름 크기', '이름 글자 크기', 200)}
+          {color('name_color', '이름 색')}
+          {font('name_font', '이름 글꼴 파일')}
+        </div>
+      )}
+      {fonts.length > 0 && (
+        <datalist id={`sug-fonts-${l.id}`}>
+          {fonts.map((n) => (
+            <option key={n} value={n} />
+          ))}
+        </datalist>
+      )}
+      {posWhat || posName ? <div className="sf-row">{posWhat}{posName}</div> : <p className="tip">위치는 showpy 편집기의 대사 탭에서 끌어서 정해요.</p>}
+    </>
+  );
+}
+
+// 대사 줄 옆에 붙는 설정 카드. 글 칸에는 글만 남기려고 줄 밖으로 뺐다
+export function LineLook({ l, set, nd = '' }: { l: Line; set: SetLine; nd?: string }) {
+  return (
+    <div className="look">
+      <div className="look-title">글자 모양, 속도, 등장 효과</div>
+      <SayFields l={l} set={set} />
+      <div className="look-title">화면 효과</div>
+      <div className="sf-row"><FxFields l={l} set={set} nd={nd} /></div>
+    </div>
   );
 }
 

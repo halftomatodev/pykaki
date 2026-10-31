@@ -6,12 +6,12 @@ import type { BoxNode, Line } from './types';
 import { isLight, uid } from './util';
 import { changeThenFocus } from './actions';
 import { FlowMenu } from './FlowMenu';
-import { SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { LineLook, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage, stageCode } from './stage';
 import { hit, keyOf } from './prefs';
 
 // 볼 때와 글을 고칠 때 상자 모양이 같다. 고칠 때는 글자 자리가 입력칸으로 바뀌고,
-// 줄 종류·순서·삭제 단추는 상자 왼쪽 바깥에, 연출 입력칸은 오른쪽 바깥에 붙는다
+// 줄 종류·순서·삭제 단추는 상자 왼쪽 바깥에, 연출 입력칸과 대사 설정 카드는 오른쪽 바깥에 붙는다
 export const BoxView = memo(function BoxView({ id, selected }: NodeProps) {
   const project = useStore((s) => s.project);
   const play = useStore((s) => s.play);
@@ -106,6 +106,7 @@ const STAGE_ICON: Record<string, string> = { scene: '🖼', show: '🧍', hide: 
 
 function Lines({ b, editing }: { b: BoxNode; editing: boolean }) {
   const update = useStore((s) => s.update);
+  const linked = useStore((s) => !!s.project.settings.renpyLink);
   const upd = (fn: (x: BoxNode) => void, key?: string) => update((p) => fn(ops.findBox(p, b.id)!), key);
   const [active, setActive] = useState<string | null>(null);
   const [top, setTop] = useState<number | null>(null);
@@ -174,6 +175,15 @@ function Lines({ b, editing }: { b: BoxNode; editing: boolean }) {
           {isStage(al.type) && (
             <div className="side side-r nodrag" style={{ top }}>
               <StageFields l={al} nd="nodrag" set={setLine(ai)} />
+            </div>
+          )}
+          {linked && (al.type === 'say' || al.type === 'narration') && (
+            <div
+              className="side side-r side-look nodrag nowheel"
+              style={{ top }}
+              onKeyDown={(e) => e.key === 'Escape' && useStore.setState({ inlineEdit: null })}
+            >
+              <LineLook l={al} nd="nodrag" set={setLine(ai)} />
             </div>
           )}
         </>

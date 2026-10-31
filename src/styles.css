@@ -305,20 +305,66 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 .drop-after { box-shadow: 0 2px 0 var(--accent); }
 
 /* 플레이 (게임 화면이라 테마와 상관없이 어둡게) */
-.stage { background: linear-gradient(#2b3047, #1a1d2b); border-radius: 10px; height: 320px; position: relative; color: #fff; overflow: hidden; }
-.cmds { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
-.cmds span { background: rgba(255, 255, 255, 0.12); font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; color: #c7d2fe; }
-.pmenu { position: absolute; top: 40px; left: 30px; right: 30px; bottom: 112px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
-.pmenu button { background: rgba(255, 255, 255, 0.92); color: #111; padding: 9px; border: none; white-space: normal; }
-.pmenu button:hover { background: #fff !important; color: #111 !important; outline: 2px solid var(--play); }
+.pframe { position: relative; width: 100%; background: #000; color: #fff; overflow: hidden; border-radius: 10px; cursor: pointer; user-select: none; }
+.pframe.full { position: fixed; inset: 0; z-index: 200; width: auto; border-radius: 0; }
+.game { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: linear-gradient(#2b3047, #1a1d2b); font-family: var(--game-font); }
+.layer { position: absolute; }
+.layer img, .layer video { display: block; }
+.noimg { display: inline-block; padding: 8px 16px; font-size: 22px; border: 2px dashed rgba(255, 255, 255, .45); border-radius: 8px; color: rgba(255, 255, 255, .7); }
+.noimg.bg { margin: 16px; }
+.fade-black { position: absolute; inset: 0; background: #000; opacity: 0; animation: fade-black 1s linear; pointer-events: none; }
+@keyframes fade-black { 50% { opacity: 1; } }
+.tin-dissolve { animation: t-opacity var(--dur) linear backwards; }
+.tout-dissolve { animation: t-opacity var(--dur) linear reverse forwards; }
+@keyframes t-opacity { from { opacity: 0; } to { opacity: 1; } }
+.tin-fade { animation: t-after-half var(--dur) steps(1) backwards; }
+.tout-fade { animation: t-until-half var(--dur) steps(1) forwards; }
+@keyframes t-after-half { from { opacity: 0; } 50%, to { opacity: 1; } }
+@keyframes t-until-half { from { opacity: 1; } 50%, to { opacity: 0; } }
+.tin-inleft { animation: t-left var(--dur) ease-out backwards; }
+.tin-inright { animation: t-right var(--dur) ease-out backwards; }
+.tin-intop { animation: t-top var(--dur) ease-out backwards; }
+.tin-inbottom { animation: t-bottom var(--dur) ease-out backwards; }
+.tout-outleft { animation: t-left var(--dur) ease-in reverse forwards; }
+.tout-outright { animation: t-right var(--dur) ease-in reverse forwards; }
+.tout-outtop { animation: t-top var(--dur) ease-in reverse forwards; }
+.tout-outbottom { animation: t-bottom var(--dur) ease-in reverse forwards; }
+@keyframes t-left { from { transform: translateX(-2000px); } }
+@keyframes t-right { from { transform: translateX(2000px); } }
+@keyframes t-top { from { transform: translateY(-2000px); } }
+@keyframes t-bottom { from { transform: translateY(2000px); } }
+.tin-zoomin { animation: t-zoom var(--dur) ease-out backwards; }
+.tout-zoomout { animation: t-zoom var(--dur) ease-in reverse forwards; }
+@keyframes t-zoom { from { transform: scale(0); opacity: 0; } }
+.ptop { position: absolute; top: 6px; left: 6px; right: 6px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
+.ptop span { background: rgba(0, 0, 0, .55); font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; color: #c7d2fe; }
+.pmenu { position: absolute; inset: 0 0 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; }
+.pmenu button { width: 62%; background: rgba(0, 0, 0, .72); color: #fff; padding: 12px; border: none; border-radius: 4px; white-space: normal; font: inherit; }
+.pmenu button:hover { background: rgba(255, 255, 255, .92) !important; color: #111 !important; }
 .pmenu button.broken { opacity: 0.6; }
-.ended { position: absolute; top: 42%; left: 0; right: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #e5e7eb; }
+.ended { position: absolute; top: 40%; left: 0; right: 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; color: #e5e7eb; text-shadow: 0 1px 4px #000; }
 .ended.broken, .ended.missing, .ended.loop { color: #fca5a5; }
-.ended button { background: rgba(255, 255, 255, 0.9); color: #111; }
-.textbox { position: absolute; left: 8px; right: 8px; bottom: 8px; min-height: 96px; background: rgba(0, 0, 0, 0.62); border-radius: 8px; padding: 9px 13px; cursor: pointer; user-select: none; }
-.textbox .name { font-weight: 800; margin-bottom: 4px; }
-.textbox .name small { font-weight: 400; opacity: 0.6; }
-.textbox .say { line-height: 1.6; white-space: pre-wrap; }
+.ended button { background: rgba(255, 255, 255, 0.9); color: #111; font: inherit; }
+.ended small { font-size: .7em; opacity: .75; }
+.textbox { position: absolute; left: 0; right: 0; background-size: 100% 100%; }
+.textbox .name { position: absolute; padding: 5px 10px; background-size: 100% 100%; white-space: nowrap; }
+.textbox .say { position: absolute; line-height: 1.3; white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+/* 글자 하나씩: 나온 글자(.on)만 보인다. 등장 효과는 렌파이 텍스트 셰이더를 비슷하게 흉내 낸다 */
+.ch { visibility: hidden; }
+.ch.on { visibility: visible; }
+.fx-dissolve .ch { visibility: visible; opacity: 0; }
+.fx-dissolve .ch.on { opacity: 1; transition: opacity .3s linear; }
+.fx-slowalpha .ch { visibility: visible; opacity: .2; }
+.fx-slowalpha .ch.on { opacity: 1; transition: opacity .15s linear; }
+.fx-flip .ch, .fx-zoom .ch, .fx-jitter .ch, .fx-wave .ch { display: inline-block; white-space: pre; }
+.fx-flip .ch { transform: rotateY(90deg); }
+.fx-flip .ch.on { transform: none; transition: transform .25s ease-out; }
+.fx-zoom .ch { transform: scale(0); }
+.fx-zoom .ch.on { transform: none; transition: transform .25s ease-out; }
+.fx-jitter .ch.on { animation: fx-jitter .18s steps(1) infinite; animation-delay: calc(var(--i) * -37ms); }
+@keyframes fx-jitter { 0% { translate: 1px -1px; } 25% { translate: -1px 1px; } 50% { translate: 1px 1px; } 75% { translate: -1px -1px; } }
+.fx-wave .ch.on { animation: fx-wave 1.2s ease-in-out infinite; animation-delay: calc(var(--i) * -90ms); }
+@keyframes fx-wave { 0%, 100% { translate: 0 -4px; } 50% { translate: 0 4px; } }
 .ctrl { display: flex; gap: 2px; margin-top: 8px; flex-wrap: wrap; }
 .plog { margin-top: 8px; max-height: 200px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; line-height: 1.6; }
 .plog .c { color: var(--accent); }
@@ -373,9 +419,6 @@ pre.rpy { background: #17191f; color: #d4d6dd; padding: 12px; border-radius: 8px
 [data-mono='1'] .warn-item { background: transparent; border: 1px solid var(--text); border-radius: 0; }
 [data-mono='1'] .count { background: transparent; outline: 1px solid var(--text); }
 [data-mono='1'] pre.rpy { background: var(--bg); color: var(--text); border: 1px solid var(--text); border-radius: 0; }
-[data-mono='1'] .stage { background: var(--bg); border: 1px solid var(--text); border-radius: 0; color: var(--text); }
-[data-mono='1'] .textbox { background: var(--bg); border: 1px solid var(--text); border-radius: 0; color: var(--text); }
-[data-mono='1'] .textbox .name { color: var(--text) !important; }
 [data-mono='1'] .cmds span { background: transparent; outline: 1px solid var(--text); color: var(--text); border-radius: 0; }
 [data-mono='1'] :is(.pmenu, .ended) button { background: var(--bg); color: var(--text); border: 1px solid var(--text); border-radius: 0; }
 [data-mono='1'] .toast { border-radius: 0; }
@@ -482,5 +525,21 @@ fieldset.plain:disabled { opacity: 0.4; }
 .link-panel { margin: 4px 0 2px; }
 .link-panel .row { display: flex; gap: 4px; flex-wrap: wrap; }
 .warn-text { color: #b45309; }
-.line-fx summary { cursor: pointer; font-size: 11px; opacity: .65; }
-.line-fx .sf-row select { max-width: 92px; }
+/* 대사 설정 카드: 다음 흐름 창처럼 반투명해서 글 상자보다 눈에 덜 띈다 */
+.side-look, .look-pop { background: color-mix(in srgb, var(--panel) 78%, transparent); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); padding: 6px 8px; }
+.side-look { width: 262px; }
+.look-pop { position: fixed; z-index: 50; width: 262px; }
+.look-close { position: absolute; top: 3px; right: 3px; opacity: .6; }
+.look { width: 100%; display: flex; flex-direction: column; gap: 3px; }
+.look-title { font-size: 11px; font-weight: 600; color: var(--muted); }
+.look-title:not(:first-child) { margin-top: 4px; }
+.look .sf-row select { max-width: 92px; }
+.look .tip { margin: 0; font-size: 11px; }
+.look-btn { font-size: 11px; padding: 0 5px; opacity: .55; }
+.look-btn:hover, .look-btn.on { opacity: 1; }
+.look-btn.has { color: var(--accent); opacity: .9; }
+[data-mono='1'] .side-look, [data-mono='1'] .look-pop { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.sf-num { width: 68px; }
+.sf-color { display: inline-flex; align-items: center; gap: 1px; }
+.sf-color input[type='color'] { width: 26px; height: 22px; padding: 1px; }
+.sf-pos { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-family: var(--mono); color: var(--muted); margin-right: 8px; }

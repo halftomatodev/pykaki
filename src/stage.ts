@@ -1,5 +1,5 @@
 // 연출 줄(scene/show/hide/music/sound): 칸에 적은 값 → 렌파이 명령 한 줄
-import type { Line, LineFx, LineType } from './types';
+import type { Line, LineFx, LineType, SayStyle } from './types';
 
 export const STAGE_TYPES: LineType[] = ['scene', 'show', 'hide', 'music', 'sound', 'fx'];
 export const isStage = (t: LineType) => STAGE_TYPES.includes(t);
@@ -38,6 +38,30 @@ export function fxArgs(f?: LineFx): string[] {
   return a;
 }
 
+// 대사 등장 효과 (렌파이 내장 텍스트 셰이더)
+export const EFFECTS: [string, string][] = [['', '효과 없음'], ['dissolve', '서서히'], ['typewriter', '타자기'], ['slowalpha', '흐리게 대기'], ['flip', '뒤집히며'], ['zoom', '커지며'], ['jitter', '떨림'], ['wave', '물결']];
+
+// 대사 줄의 괄호 안 값: size=30, cps=20 ... 위치는 showpy가 뒤에 덧붙이는 순서와 맞춰 맨 뒤에 둔다
+export function sayArgs(s?: SayStyle): string[] {
+  if (!s) return [];
+  const a: string[] = [];
+  const num = (k: keyof SayStyle) => s[k] !== undefined && a.push(`${k}=${s[k]}`);
+  const str = (k: keyof SayStyle) => s[k] && a.push(`${k}=${pyStr(String(s[k]))}`);
+  num('size');
+  str('font');
+  str('color');
+  num('cps');
+  str('effect');
+  num('name_size');
+  str('name_font');
+  str('name_color');
+  num('x');
+  num('y');
+  num('name_x');
+  num('name_y');
+  return a;
+}
+
 // 화면 효과 연출 줄의 명령. 줄이 여러 개면 \n으로 잇는다
 function fxCode(f?: LineFx): string | null {
   if (!f) return null;
@@ -63,7 +87,7 @@ const pyStr = (s: string) => '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 // 파일 이름만 적으면 game/audio 폴더에서 찾는다
 const audioPath = (f: string) => (f.includes('/') ? f : 'audio/' + f);
 
-function imageName(l: Line) {
+export function imageName(l: Line) {
   const k = l.kind ?? 'char';
   if (k === 'bg') return words(l.image) ? 'bg ' + words(l.image) : '';
   if (k === 'char') return l.who ? [l.who, words(l.attr)].filter(Boolean).join(' ') : '';

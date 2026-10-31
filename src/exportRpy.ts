@@ -2,7 +2,7 @@
 import type { BoxNode, LabelGroup, Line, Project, Settings } from './types';
 import { exitLinks, fallTarget } from './ops';
 import { IDENT, PLUGIN_NAMES, RESERVED } from './util';
-import { badImageName, fxArgs, isStage, stageCode } from './stage';
+import { badImageName, fxArgs, isStage, sayArgs, stageCode } from './stage';
 
 export interface Warn { level: 'error' | 'warn'; msg: string; nodeId?: string }
 
@@ -156,7 +156,8 @@ export function generateRpy(p: Project): { code: string; warnings: Warn[] } {
         if (!l.text.trim()) W.push({ level: 'warn', msg: `빈 대사가 있어요 (${b.title || b.id})`, nodeId: b.id });
         pct(l.text, '대사');
         // 대사 괄호는 플러그인이 받는다. 플러그인이 없으면 오류가 나서 연결을 켰을 때만 쓴다
-        const fa = S.renpyLink ? fxArgs(l.fx) : [];
+        if (!S.renpyLink && sayArgs(l.say).length) W.push({ level: 'warn', msg: `대사의 글자 모양은 showpy 연결을 켜야 내보내요 (${b.title || b.id})`, nodeId: b.id });
+        const fa = S.renpyLink ? [...fxArgs(l.fx), ...sayArgs(l.say)] : [];
         const tail = fa.length ? ` (${fa.join(', ')})` : '';
         if (l.type === 'narration') return body.push(q(l.text) + tail);
         const c = l.who ? charById.get(l.who) : undefined;

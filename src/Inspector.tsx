@@ -1,13 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, ExitType, Line, Project } from './types';
 import { uid } from './util';
-import { FxFields, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
+import { LineLook, SpeakerSelect, StageFields, useLineDrag } from './LineFields';
 import { isStage } from './stage';
 import { hit, keyOf, usePrefs } from './prefs';
 
 export type Upd = (fn: (b: BoxNode, p: Project) => void, key?: string) => void;
+type LookOpen = { id: string; style: React.CSSProperties } | null;
 
 export function Inspector() {
   const ids = useStore((s) => s.selectedIds);
@@ -76,6 +78,8 @@ function BoxInspector({ b }: { b: BoxNode }) {
   const upd: Upd = (fn, key) => update((p) => fn(ops.findBox(p, b.id)!, p), key);
   const g = project.labels.find((l) => l.id === b.group);
   const drag = useLineDrag((from, to) => upd((x) => ops.moveLine(x, from, to)));
+  const [lookOpen, setLookOpen] = useState<LookOpen>(null); // 설정 카드는 한 줄 것만 연다
+  useEffect(() => setLookOpen(null), [b.id]);
 
   const addLine = () => {
     const last = b.lines[b.lines.length - 1];
@@ -114,7 +118,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
 
       <h4>대사</h4>
       {b.lines.map((l, i) => (
-        <LineRow key={l.id} l={l} i={i} upd={upd} drag={drag} />
+        <LineRow key={l.id} l={l} i={i} upd={upd} drag={drag} lookOpen={lookOpen} setLookOpen={setLookOpen} />
       ))}
       <div className="row">
         <button onClick={addLine}>+ 줄 추가</button>
@@ -127,7 +131,7 @@ function BoxInspector({ b }: { b: BoxNode }) {
   );
 }
 
-function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: ReturnType<typeof useLineDrag> }) {
+function LineRow({ l, i, upd, drag, lookOpen, setLookOpen }: { l: Line; i: number; upd: Upd; drag: ReturnType<typeof useLineDrag>; lookOpen: LookOpen; setLookOpen: (v: LookOpen) => void }) {
   const focusLineId = useStore((s) => s.focusLineId);
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -149,7 +153,14 @@ function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: Retu
   };
 
   const linked = useStore((s) => !!s.project.settings.renpyLink);
-  const placeholder = ({ narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' } as Record<string, string>)[l.type];
+  const lookPos = lookOpen?.id === l.id ? lookOpen.style : null;
+  const toggleLook = (e: React.MouseEvent<HTMLElement>) => {
+    if (lookPos) return setLookOpen(null);
+    const panel = e.currentTarget.closest('.right-panel')!.getBoundingClientRect();
+    const top = Math.max(8, Math.min(e.currentTarget.closest('.line')!.getBoundingClientRect().top, window.innerHeight - 340));
+    setLookOpen({ id: l.id, style: { top, right: window.innerWidth - panel.left + 8 } });
+  };
+  const placeholder =({ narration: '내레이션', say: '대사', command: '렌파이 명령 (예: show alice smile / scene bg room / play music "a.ogg")', note: '작가용 메모 (주석으로 내보내요)' } as Record<string, string>)[l.type];
 
   return (
     <div className={'line t-' + l.type + (isStage(l.type) ? ' t-stage' : '') + drag.cls(i)} {...drag.row(i)}>
@@ -158,6 +169,9 @@ function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: Retu
         <SpeakerSelect l={l} set={set} />
         <button title="줄 삭제" onClick={() => upd((x) => void x.lines.splice(i, 1))}>✕</button>
         {l.type === 'say' && <input className="attr" placeholder="속성(표정)" value={l.attr ?? ''} onChange={(e) => upd((x) => void (x.lines[i].attr = e.target.value), 'attr' + l.id)} />}
+        {linked && (l.type === 'say' || l.type === 'narration') && (
+          <button className={'look-btn' + (l.say || l.fx ? ' has' : '') + (lookPos ? ' on' : '')} title="글자 모양, 속도, 등장 효과, 화면 효과" onClick={toggleLook}>글자</button>
+        )}
       </div>
       <div className="line-body">
         {isStage(l.type) ? (
@@ -165,13 +179,15 @@ function LineRow({ l, i, upd, drag }: { l: Line; i: number; upd: Upd; drag: Retu
         ) : (
           <textarea id={'ed-' + l.id} ref={ref} rows={1} value={l.text} placeholder={placeholder} onKeyDown={onKey} onChange={(e) => upd((x) => void (x.lines[i].text = e.target.value), 'text' + l.id)} />
         )}
-        {linked && (l.type === 'say' || l.type === 'narration') && (
-          <details className="line-fx" open={!!l.fx}>
-            <summary>화면 효과</summary>
-            <div className="sf-row"><FxFields l={l} set={set} /></div>
-          </details>
-        )}
       </div>
+      {/* 글 칸에는 글만 둔다. 이 패널은 화면 오른쪽 끝이라 설정 카드는 패널 왼쪽에 연다 */}
+      {lookPos && createPortal(
+        <div className="side look-pop" style={lookPos}>
+          <button className="look-close" title="닫기" onClick={() => setLookOpen(null)}>✕</button>
+          <LineLook l={l} set={set} />
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

@@ -12,6 +12,23 @@ export interface LineFx {
   cursor?: string; // effect | overlay | top | default
 }
 
+// 대사 한 줄의 글자 모양. showpy 대사 괄호로 내보낸다. 빈 칸은 안 내보낸다
+export interface SayStyle {
+  size?: number;
+  font?: string; // game 폴더 기준 글꼴 파일
+  color?: string; // #rrggbb
+  cps?: number; // 1초에 나오는 글자 수
+  effect?: string; // 등장 효과 (EFFECTS)
+  name_size?: number;
+  name_font?: string;
+  name_color?: string;
+  // 위치는 showpy 편집기에서 정해서 받아 적는다. 대사창 기준 좌표
+  x?: number;
+  y?: number;
+  name_x?: number;
+  name_y?: number;
+}
+
 export type ImageKind = 'char' | 'bg' | 'etc';
 
 export interface Line {
@@ -27,6 +44,7 @@ export interface Line {
   file?: string; // music/sound: 파일 이름
   stop?: boolean; // music: 멈추기
   fx?: LineFx; // say, narration, fx 줄 (showpy 연결을 켰을 때만 내보낸다)
+  say?: SayStyle; // say, narration 줄 (showpy 연결을 켰을 때만 내보낸다)
 }
 
 export interface Choice {

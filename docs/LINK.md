@@ -9,6 +9,8 @@
 | 대사, 선택지, 흐름, 줄마다 넣는 화면 효과 | PyKaki | `.flow.json` |
 | 그림, webm 영상, 음악, 효과음 넣기 | 주로 showpy 편집기 (PyKaki에서도 칸으로 넣을 수 있음) | `.flow.json` (showpy에서 넣으면 PyKaki가 받아 적음) |
 | 그림 위치 | showpy 편집기만 | `game/ui_kit/stage_layout.rpy` |
+| 대사 글자 크기, 글꼴, 색, 속도, 등장 효과 | PyKaki | `.flow.json` |
+| 대사와 이름의 위치 | showpy 편집기만 (PyKaki는 받아 적어 보여 줌) | `.flow.json` |
 
 ```
 PyKaki (.flow.json이 원본)
@@ -20,7 +22,7 @@ PyKaki (.flow.json이 원본)
 PyKaki가 showpy_inbox.json을 받아 적음 → 대본에 보임 → 다음 내보내기에도 남음
 ```
 
-**역가져오기는 없습니다.** PyKaki는 `.rpy`를 읽지 않습니다. 받는 것은 `showpy_inbox.json`에 적힌 줄뿐이고, 대사와 선택지는 이 길로 오지 않습니다.
+**역가져오기는 없습니다.** PyKaki는 `.rpy`를 읽지 않습니다. 받는 것은 `showpy_inbox.json`에 적힌 기록뿐이고, 대사 글자와 선택지는 이 길로 오지 않습니다. 대사는 위치만 옵니다.
 
 ## 2. 내보낸 `.rpy`의 표시
 
@@ -65,7 +67,8 @@ showpy가 쓰고, PyKaki가 읽은 뒤 비웁니다. PyKaki가 읽은 기록만 
     { "id": "sp9a8f101", "op": "insert", "code": "show ghost", "box": "n1", "before": "l3" },
     { "id": "sp9a8f102", "op": "insert", "code": "play sound \"audio/knock.wav\"", "box": "n1", "after": "sp9a8f101" },
     { "id": "sp9a8f103", "op": "insert", "code": "scene bg room", "box": "n3", "end": "n3" },
-    { "id": "sp9a8f104", "op": "replace", "code": "show mina scared with dissolve", "line": "l4" }
+    { "id": "sp9a8f104", "op": "replace", "code": "show mina scared with dissolve", "line": "l4" },
+    { "id": "sp9a8f105", "op": "say_pos", "line": "l5", "pos": { "x": 520, "y": 60 } }
   ]
 }
 ```
@@ -73,11 +76,14 @@ showpy가 쓰고, PyKaki가 읽은 뒤 비웁니다. PyKaki가 읽은 기록만 
 | 값 | 뜻 |
 |---|---|
 | `id` | `insert`면 새 줄의 id (`.rpy`의 `# @l:`과 같음). 이미 있는 id면 다시 넣지 않습니다 |
-| `op` | `insert` 줄 넣기, `replace` 줄 바꾸기 |
+| `op` | `insert` 줄 넣기, `replace` 줄 바꾸기, `say_pos` 대사 위치 |
 | `code` | 렌파이 명령 한 줄 |
 | `box` | 줄이 들어갈 상자. 기준 줄이 사라졌을 때 그 상자의 끝에 넣습니다 |
 | `before` `after` `end` | `insert`의 자리. 줄 앞, 줄 뒤, 상자 끝 중 하나 |
-| `line` | `replace`로 바꿀 줄의 id |
+| `line` | `replace`, `say_pos`로 바꿀 줄의 id |
+| `pos` | `say_pos`의 값. `x` `y` `name_x` `name_y`, 대사창 왼쪽 위 기준. `null`이면 지움 |
+
+`say_pos`를 받으면 그 대사 줄의 괄호에 같은 값을 내보냅니다. 예전 PyKaki는 이 기록을 모른 채 지우므로 두 프로그램을 같이 올립니다.
 
 `code`는 `show` `scene` `hide` `play` `stop`으로 시작하는 줄만 들어옵니다. PyKaki(`src/inbox.ts`)는 칸으로 나타낼 수 있으면 칸이 있는 연출 줄로, 아니면 "직접 명령" 줄로 바꿉니다.
 
@@ -93,7 +99,7 @@ showpy가 쓰고, PyKaki가 읽은 뒤 비웁니다. PyKaki가 읽은 기록만 
 
 ## 4. `ui_kit/stage_layout.rpy`
 
-showpy 편집기가 만듭니다. PyKaki는 읽지도 쓰지도 않습니다.
+showpy 편집기가 만듭니다. PyKaki는 쓰지 않고, 플레이 화면의 그림 자리를 잡을 때 읽기만 합니다.
 
 ```renpy
 define stage.placed = {
@@ -116,9 +122,24 @@ define stage.placed = {
 - `movies/mask_ghost.webm`은 `show ghost`로 씁니다. (앞의 `mask_`는 투명 영상 표시)
 - PyKaki는 `label start:`를 내보내므로, 다른 `.rpy`에 `label start:`가 있으면 렌파이가 오류를 냅니다. 폴더를 연결하면 PyKaki가 알려 줍니다.
 
-## 6. 확인 상태 (showpy 4.3, 렌파이 8.5.3)
+## 6. 플레이 화면이 읽는 파일
+
+PyKaki 플레이 화면은 연결한 game 폴더에서 아래 값을 글자로 찾아 읽습니다. 게임 코드를 실행하지 않습니다.
+
+| 파일 | 읽는 값 |
+|---|---|
+| `gui.rpy` | `gui.init` 크기, 글자 크기, 색, 글꼴, 대사창과 이름 자리 |
+| `options.rpy`, `ui_kit/custom_ui_config.rpy` | 기본 텍스트 속도 (`custom_ui.text_cps`가 먼저) |
+| `gui/textbox.png`, `gui/namebox.png` | 대사창과 이름 배경 |
+| `ui_kit/stage_layout.rpy` | 그림 위치 |
+| `images/`, `movies/`, `audio/` | 그림, 영상, 소리 |
+
+## 7. 확인 상태 (showpy 4.4, 렌파이 8.5.3)
 
 **자동으로 실행해서 확인함:**
+- `cps`로 대사 속도가 바뀜 (`preferences.text_cps = 0`인 프로젝트에서. `speed`는 이 프로젝트에서 효과 없음)
+- 대사 탭 함수로 위치 저장 → 받아 적기 → 다시 내보내기를 하면 `.rpy`가 글자 하나까지 같음. PyKaki 원고에서 글자 크기 바꾸기는 막힘
+- 플레이 화면의 그림, 표정, 선택지, 뒤로 가기, 상자 가운데서 시작, F8과 Esc. **브라우저 전체화면은 시험 도구에서 되지 않아 창을 덮는 화면으로 확인함**
 - 샘플의 세 갈래와 call에서 지금 상자 추적이 맞음. `label ward:` 아래 `label ward.n1:`이 이어져도 동작함
 - 줄 넣기 → 받아 적기 → 다시 내보내기를 하면 `.rpy`가 글자 하나까지 같음
 - 대사 저장 막기, 위치 저장과 우선순위
@@ -126,6 +147,8 @@ define stage.placed = {
 
 **아직 사람이 확인해야 함:**
 - 실제 폴더 선택창과 권한 창을 누르는 것
-- 소리가 실제로 나는지
-- 편집기에서 마우스로 끌어 위치를 저장하는 것 (같은 함수를 코드로 불러서 확인함)
+- 소리가 실제로 나는지 (플레이 화면에서 재생이 시작되는 것까지는 확인함)
+- 크롬과 엣지에서 F8로 실제 전체화면이 되는 것
+- 플레이 화면과 렌파이의 글자 효과, 전환이 비슷해 보이는지
+- 편집기에서 마우스로 끌어 그림과 대사 위치를 저장하는 것 (같은 함수를 코드로 불러서 확인함)
 - 자동 다시 불러오기가 켜진 채 PyKaki가 파일을 쓰는 것 (다른 방법으로 파일을 바꾼 경우만 확인함)

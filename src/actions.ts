@@ -6,6 +6,7 @@ import { layoutAll, layoutSubset } from './layout';
 import * as ops from './ops';
 import { uid } from './util';
 import { keyOf } from './prefs';
+import { folderAllowed, folderReady, scanFolder } from './gameFolder';
 
 export type LayoutMode = 'all' | 'label' | 'selection';
 
@@ -107,6 +108,39 @@ export function toggleFocus() {
   const on = !useStore.getState().focusMode;
   useStore.setState({ focusMode: on });
   if (on) useStore.getState().say(`집중 모드 · ${keyOf('focus')}로 돌아와요`);
+}
+
+// 전체화면 플레이. 플레이 중이면 이어서, 아니면 고른 상자(돌아올 때 보던 줄이 있으면 그 줄)부터 시작한다
+export async function enterFullPlay() {
+  const s = useStore.getState();
+  if (s.fullPlay) return;
+  // 브라우저 전체화면은 키를 누른 바로 그때 요청해야 해서 폴더 권한은 필요할 때만 먼저 묻는다
+  if (folderReady() && (await folderAllowed(true))) void scanFolder().catch((e) => console.warn('폴더를 못 읽었어요', e));
+  if (!s.playing) {
+    const box = s.selectedIds[0] ?? null;
+    const resume = s.playResume;
+    s.startPlay(box, resume && resume.box === box ? resume.line : null);
+  }
+  useStore.setState({ fullPlay: true });
+  (document.activeElement as HTMLElement | null)?.blur?.();
+  // 브라우저가 전체화면을 막아도 창 전체를 덮는 화면으로 플레이할 수 있다
+  document.documentElement.requestFullscreen?.().catch(() => {});
+}
+
+// 편집 화면으로. 보던 상자와 줄을 골라 둔 채로 돌아온다
+export function leaveFullPlay() {
+  const s = useStore.getState();
+  if (!s.fullPlay) return;
+  const box = s.play?.current ?? null;
+  const line = s.play?.line ?? null;
+  s.stopPlay();
+  useStore.setState({ tab: 'edit', playResume: box ? { box, line } : null });
+  if (box) {
+    s.select([box]);
+    s.focusNodes([box]);
+    useStore.setState({ focusLineId: line });
+  }
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
 
 // 상자 크기: 화면에 그려진 크기(확대 전). 없으면 기본값

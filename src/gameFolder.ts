@@ -13,23 +13,57 @@ export const RPY_FILE = 'script_flow.rpy';
 export interface Media {
   images: string[]; // "bg hall", "mina scared", "ghost", 영상도 같은 이름 규칙
   audio: string[]; // audio 폴더 기준 경로
+  fonts: string[]; // game 폴더 기준 경로
 }
+
+// 플레이 화면을 게임처럼 그리는 데 쓰는 값. gui.rpy 등에서 읽고, 없으면 렌파이 기본값 (1280x720)
+export interface GameLook {
+  width: number;
+  height: number;
+  textSize: number;
+  nameSize: number;
+  textColor: string;
+  font: string | null;
+  textboxHeight: number;
+  textboxYalign: number;
+  nameX: number;
+  nameY: number;
+  dialogueX: number;
+  dialogueY: number;
+  dialogueWidth: number;
+  textCps: number; // 0이면 한 번에
+  textbox: string | null; // gui/textbox.png
+  namebox: string | null; // gui/namebox.png
+  placed: Record<string, [number, number]>; // stage_layout.rpy. "태그" 또는 "상자|태그"
+}
+
+export const DEFAULT_LOOK: GameLook = {
+  width: 1280, height: 720, textSize: 22, nameSize: 30, textColor: '#ffffff', font: null,
+  textboxHeight: 185, textboxYalign: 1, nameX: 240, nameY: 0, dialogueX: 268, dialogueY: 50, dialogueWidth: 744,
+  textCps: 0, textbox: null, namebox: null, placed: {},
+};
 
 interface F {
   name: string | null; // 연결한 폴더 이름
   media: Media;
+  look: GameLook;
   startClash: string | null; // label start가 있는 다른 파일
   set(v: Partial<F>): void;
 }
 
+const NO_MEDIA: Media = { images: [], audio: [], fonts: [] };
+
 export const useGameFolder = create<F>((set) => ({
   name: null,
-  media: { images: [], audio: [] },
+  media: NO_MEDIA,
+  look: DEFAULT_LOOK,
   startClash: null,
   set: (v) => set(v),
 }));
 
 let dir: any = null;
+let pictures = new Map<string, { path: string; video: boolean }>(); // 렌파이 그림 이름 → game 폴더 기준 경로
+const urls = new Map<string, string>(); // 경로 → 읽어 둔 주소
 
 // 렌파이 그림 이름: 파일 이름에서 확장자를 빼고 소문자로. 안쪽 폴더는 이름에 안 들어간다
 export const imageNameOf = (file: string) => file.replace(/\.[^.]+$/, '').toLowerCase().split('@')[0].trim();
@@ -39,6 +73,7 @@ export const movieNameOf = (file: string) => imageNameOf(file).replace(/^mask_/,
 const IMG = /\.(png|jpe?g|webp|avif)$/i;
 const MOV = /\.webm$/i;
 const SND = /\.(ogg|opus|mp3|wav|flac)$/i;
+const FONT = /\.(ttf|otf|ttc|woff2?)$/i;
 
 async function walk(d: any, prefix = ''): Promise<string[]> {
   const out: string[] = [];
@@ -71,17 +106,118 @@ async function writeText(d: any, name: string, text: string) {
   await ws.close();
 }
 
+// game 폴더 기준 경로의 파일을 브라우저 주소로. 없으면 null
+export async function fileUrl(path: string): Promise<string | null> {
+  if (!dir) return null;
+  const had = urls.get(path);
+  if (had) return had;
+  try {
+    let d = dir;
+    const parts = path.split('/').filter(Boolean);
+    for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p);
+    const url = URL.createObjectURL(await (await d.getFileHandle(parts[parts.length - 1])).getFile());
+    urls.set(path, url);
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+export async function pictureOf(name: string) {
+  const p = pictures.get(name);
+  if (!p) return null;
+  const url = await fileUrl(p.path);
+  return url ? { url, video: p.video } : null;
+}
+
+// 대본의 소리 파일 이름은 audio 폴더 기준일 수도, game 폴더 기준일 수도 있다
+export const soundUrl = async (file: string) => (await fileUrl(file)) ?? (await fileUrl('audio/' + file));
+
+// 게임 글꼴을 브라우저에 등록하고 글꼴 이름을 돌려준다. 다 읽기 전에는 다음 글꼴로 보인다
+const families = new Map<string, string>();
+let familySeq = 0; // 폴더를 다시 읽어도 이름이 겹치지 않게 계속 센다
+export function gameFont(path: string | null | undefined) {
+  if (!path || !dir) return undefined;
+  let name = families.get(path);
+  if (!name) {
+    name = 'pk-game-' + familySeq++;
+    families.set(path, name);
+    const family = name;
+    void fileUrl(path)
+      .then(async (u) => {
+        if (!u) return;
+        const ff = new FontFace(family, `url(${u})`);
+        document.fonts.add(await ff.load());
+      })
+      .catch((e) => console.warn('글꼴을 못 읽었어요', path, e));
+  }
+  return name;
+}
+
+const num = (src: string, key: string, def: number) => {
+  const m = new RegExp(`^define\\s+gui\\.${key}\\s*=\\s*(-?[\\d.]+)`, 'm').exec(src);
+  return m ? Number(m[1]) : def;
+};
+const quoted = (src: string, key: string) => new RegExp(`^define\\s+gui\\.${key}\\s*=\\s*"([^"]+)"`, 'm').exec(src)?.[1] ?? null;
+
+// 게임의 설정 파일을 읽는다. 게임 안의 코드는 실행하지 않고 값만 찾는다
+async function readLook(): Promise<GameLook> {
+  const d = DEFAULT_LOOK;
+  const gui = (await readText(dir, 'gui.rpy')) ?? '';
+  const size = /gui\.init\(\s*(\d+)\s*,\s*(\d+)\s*\)/.exec(gui);
+  const options = (await readText(dir, 'options.rpy')) ?? '';
+  const uiKit = await sub(dir, 'ui_kit');
+  const uiConfig = uiKit ? (await readText(uiKit, 'custom_ui_config.rpy')) ?? '' : '';
+  const layout = uiKit ? (await readText(uiKit, 'stage_layout.rpy')) ?? '' : '';
+  const cps = /^define\s+custom_ui\.text_cps\s*=\s*(\d+)/m.exec(uiConfig) ?? /^default\s+preferences\.text_cps\s*=\s*(\d+)/m.exec(options);
+
+  const placed: GameLook['placed'] = {};
+  for (const m of layout.matchAll(/(?:"(\w+)"|\(\s*"([^"]+)"\s*,\s*"(\w+)"\s*\))\s*:\s*"stage\.pos\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)/g))
+    placed[m[1] ?? m[2] + '|' + m[3]] = [Number(m[4]), Number(m[5])];
+
+  return {
+    width: size ? Number(size[1]) : d.width,
+    height: size ? Number(size[2]) : d.height,
+    textSize: num(gui, 'text_size', d.textSize),
+    nameSize: num(gui, 'name_text_size', d.nameSize),
+    textColor: quoted(gui, 'text_color') ?? d.textColor,
+    font: quoted(gui, 'text_font'),
+    textboxHeight: num(gui, 'textbox_height', d.textboxHeight),
+    textboxYalign: num(gui, 'textbox_yalign', d.textboxYalign),
+    nameX: num(gui, 'name_xpos', d.nameX),
+    nameY: num(gui, 'name_ypos', d.nameY),
+    dialogueX: num(gui, 'dialogue_xpos', d.dialogueX),
+    dialogueY: num(gui, 'dialogue_ypos', d.dialogueY),
+    dialogueWidth: num(gui, 'dialogue_width', d.dialogueWidth),
+    textCps: cps ? Number(cps[1]) : d.textCps,
+    textbox: await fileUrl('gui/textbox.png'),
+    namebox: await fileUrl('gui/namebox.png'),
+    placed,
+  };
+}
+
 export async function scanFolder() {
   if (!dir) return;
-  const media: Media = { images: [], audio: [] };
+  // 그림을 바꾸고 돌아와도 새 파일이 보이게 다시 읽는다. 옛 주소는 화면이 새 값을 받은 뒤에 버린다
+  const oldUrls = [...urls.values()];
+  urls.clear();
+  families.clear();
+  const media: Media = { images: [], audio: [], fonts: [] };
+  const found = new Map<string, { path: string; video: boolean }>();
   const images = await sub(dir, 'images');
-  if (images) for (const f of await walk(images)) if (IMG.test(f)) media.images.push(imageNameOf(f.split('/').pop()!));
+  if (images) for (const f of await walk(images)) if (IMG.test(f)) found.set(imageNameOf(f.split('/').pop()!), { path: 'images/' + f, video: false });
   const movies = await sub(dir, 'movies');
-  if (movies) for (const f of await walk(movies)) if (MOV.test(f)) media.images.push(movieNameOf(f.split('/').pop()!));
+  if (movies) for (const f of await walk(movies)) if (MOV.test(f)) found.set(movieNameOf(f.split('/').pop()!), { path: 'movies/' + f, video: true });
+  pictures = found;
+  media.images = [...found.keys()].sort();
   const audio = await sub(dir, 'audio');
   if (audio) for (const f of await walk(audio)) if (SND.test(f)) media.audio.push(f);
-  media.images = [...new Set(media.images)].sort();
   media.audio.sort();
+  for await (const [name, h] of dir.entries()) if (h.kind === 'file' && FONT.test(name)) media.fonts.push(name);
+  const fonts = await sub(dir, 'fonts');
+  if (fonts) for (const f of await walk(fonts)) if (FONT.test(f)) media.fonts.push('fonts/' + f);
+  media.fonts.sort();
+  const look = await readLook();
 
   // 새 렌파이 프로젝트의 script.rpy에도 label start가 있어서 두 번 정의가 된다
   let startClash: string | null = null;
@@ -92,7 +228,8 @@ export async function scanFolder() {
       break;
     }
   }
-  useGameFolder.getState().set({ name: dir.name, media, startClash });
+  useGameFolder.getState().set({ name: dir.name, media, look, startClash });
+  setTimeout(() => oldUrls.forEach((u) => URL.revokeObjectURL(u)), 5000);
 }
 
 const allowed = async (ask: boolean) => {
@@ -122,7 +259,8 @@ export async function connectFolder() {
 export async function disconnectFolder() {
   dir = null;
   await kvSet('gameDir', null);
-  useGameFolder.getState().set({ name: null, media: { images: [], audio: [] }, startClash: null });
+  pictures = new Map();
+  useGameFolder.getState().set({ name: null, media: NO_MEDIA, look: DEFAULT_LOOK, startClash: null });
 }
 
 // 앱을 다시 열 때: 연결은 기억하지만, 권한은 사용자가 한 번 눌러야 다시 생긴다
@@ -168,7 +306,7 @@ export async function pullInbox(ask = false) {
   await writeText(dir, INBOX_FILE, JSON.stringify({ format: 'showpy-inbox', version: 1, ops: rest }, null, 2));
 
   const extra = [res.moved.length ? `기준 줄이 없어 상자 끝에 넣음 ${res.moved.length}개` : '', res.dropped.length ? `넣을 곳이 없어 뺌: ${res.dropped.join(', ')}` : ''].filter(Boolean).join(' / ');
-  s.say(`showpy에서 넣은 줄 ${res.applied}개를 받아 적었어요${extra ? ' (' + extra + ')' : ''}`);
+  s.say(`showpy에서 고친 ${res.applied}곳을 받아 적었어요${extra ? ' (' + extra + ')' : ''}`);
   return res.applied;
 }
 

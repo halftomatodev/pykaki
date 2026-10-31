@@ -3,7 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import { useStore } from './store';
 import { exportRpyFile, hasRpyTarget, newProject, openProject, saveProject } from './files';
 import { snapAdd, snapDelete, snapList, type Snapshot } from './persist';
-import { addBoxCenter, runLayout, toggleFocus } from './actions';
+import { addBoxCenter, enterFullPlay, runLayout, toggleFocus } from './actions';
 import { timeStr } from './util';
 import { keyOf } from './prefs';
 import { installApp, useCanInstall } from './pwa';
@@ -54,6 +54,7 @@ export function Toolbar() {
       <button disabled={!s.future.length} onClick={s.redo} title={'다시 실행 ' + keyOf('redo')}>↷</button>
       <span className="sep" />
       <button className="primary" onClick={() => s.startPlay(null)} title={keyOf('play')}>▶ 플레이</button>
+      <button onClick={() => void enterFullPlay()} title={`고른 상자부터 전체화면으로 플레이 (${keyOf('fullPlay')})`}>⛶ 전체화면</button>
       <button onClick={() => exportRpyFile(false)}>.rpy 내보내기</button>
       {hasRpyTarget() && <button onClick={() => exportRpyFile(true)} title={keyOf('export')}>같은 곳에 다시</button>}
       <span className="grow" />

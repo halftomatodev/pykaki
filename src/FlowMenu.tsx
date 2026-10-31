@@ -1,6 +1,6 @@
 // 글을 고치는 동안 상자 오른쪽에 붙는 "다음 흐름" 창.
 // 항목이 모두 펼쳐져 있고, 단축키(기본 Alt+Enter)로 들어가 ↑↓·Enter·←·Esc로 키보드만으로 고른다
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useStore } from './store';
 import * as ops from './ops';
 import type { BoxNode, ExitType } from './types';
@@ -34,19 +34,30 @@ export function FlowMenu({ b }: { b: BoxNode }) {
   const [query, setQuery] = useState('');
   const [cur, setCur] = useState(0);
 
-  // 다음 흐름 줄 높이에 맞추되, 연출 입력칸과 겹치면 그 아래로 내린다
-  useLayoutEffect(() => {
+  // 다음 흐름 줄 높이에 맞추되, 옆에 붙은 카드(연출 입력칸, 대사 설정)와 겹치면 그 아래로 내린다
+  const place = () => {
     const box = ref.current?.parentElement;
     const exit = box?.querySelector('.box-exit') as HTMLElement | null;
     if (!box || !exit) return;
     let t = exit.offsetTop;
-    const stage = box.querySelector('.side-r') as HTMLElement | null;
-    if (stage) {
+    const side = box.querySelector('.side-r') as HTMLElement | null;
+    if (side?.offsetParent) {
+      // 카드가 움직이는 중이어도 도착할 자리로 잰다
       const z = box.getBoundingClientRect().height / (box.offsetHeight || 1);
-      t = Math.max(t, (stage.getBoundingClientRect().bottom - box.getBoundingClientRect().top) / z + 8);
+      const base = (side.offsetParent.getBoundingClientRect().top - box.getBoundingClientRect().top) / z;
+      t = Math.max(t, base + parseFloat(side.style.top || '0') + side.offsetHeight + 8);
     }
-    if (t !== top) setTop(t);
-  });
+    setTop(t);
+  };
+  useLayoutEffect(place);
+  // 쓰는 줄을 옮기면 이 창은 다시 그려지지 않아서, 상자 안이 바뀌는 것을 지켜본다
+  useEffect(() => {
+    const box = ref.current?.parentElement;
+    if (!box) return;
+    const watch = new MutationObserver(place);
+    watch.observe(box, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+    return () => watch.disconnect();
+  }, []);
 
   // 들어오면 키를 받을 칸에 커서를 둔다. 나갈 때는 쓰던 글자 칸으로 돌려보낸다
   const back = useRef<string | null>(null);

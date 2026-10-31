@@ -5,7 +5,7 @@ import neodgmUrl from '@kfonts/neodgm/neodgm.woff2?url';
 // Pretendard (SIL OFL 1.1, licenses/OFL-Pretendard.txt). 굵기를 고를 수 있는 가변 글꼴 하나를 파일 안에 넣는다
 import pretendardUrl from 'pretendard/dist/web/variable/woff2/PretendardVariable.woff2?url';
 
-export type ActionId = 'focus' | 'nextBox' | 'flowMenu' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'newLine';
+export type ActionId = 'focus' | 'nextBox' | 'flowMenu' | 'save' | 'saveAs' | 'export' | 'undo' | 'redo' | 'newBox' | 'play' | 'fullPlay' | 'newLine';
 
 // 키는 e.code(자판 위치)로 적는다. 한글 입력 상태에서도 같은 키로 동작한다
 export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
@@ -20,6 +20,7 @@ export const ACTIONS: { id: ActionId; label: string; def: string }[] = [
   { id: 'redo', label: '다시 실행', def: 'Ctrl+KeyY' },
   { id: 'newBox', label: '새 상자', def: 'Alt+KeyN' },
   { id: 'play', label: '처음부터 플레이', def: 'Alt+KeyP' },
+  { id: 'fullPlay', label: '편집 화면 / 전체화면 플레이 바꾸기', def: 'F8' },
 ];
 
 // box·label은 그라데이션 테마와 직접 고르기에서만: 상자와 label 배경을 이 색으로 칠한다
